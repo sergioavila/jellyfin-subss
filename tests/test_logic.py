@@ -21,6 +21,7 @@ from app.logic import (
     wanted_langs,
 )
 from app.providers import DOWNLOAD, SEARCH, TEST, query_from_item, unzip_sub
+from app.worker import _provider_names
 
 
 class LanguageTests(unittest.TestCase):
@@ -244,6 +245,14 @@ class ZipTests(unittest.TestCase):
         data, name = unzip_sub(buf.getvalue(), "x.srt")
         self.assertEqual(name, "movie.srt")
         self.assertEqual(data, b"1\n")
+
+
+class RetryDetailTests(unittest.TestCase):
+    def test_provider_names_from_search_errors(self):
+        self.assertEqual(
+            _provider_names(["subf2m.co: No hay archivo", "Podnapisi: timeout"]),
+            "subf2m.co · Podnapisi",
+        )
 
 
 if __name__ == "__main__":

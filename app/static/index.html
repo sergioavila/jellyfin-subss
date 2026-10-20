@@ -16,6 +16,7 @@
       <img class="brand" src="/static/app-logo.png" alt="Subss" width="240" height="96">
       <nav>
         <button type="button" data-view="home" aria-current="page">Inicio</button>
+        <button type="button" data-view="queue">Cola</button>
         <button type="button" data-view="review">Revisar</button>
         <button type="button" data-view="settings">Ajustes</button>
       </nav>
@@ -23,13 +24,14 @@
     </header>
     <main>
       <section id="view-home">
-        <h1 id="home-title">Biblioteca</h1>
+        <h1>Biblioteca</h1>
         <p class="lede" id="home-lede">Marca series, temporadas o títulos y pulsa Escanear ahora. El escaneo automático sigue cubriendo todo solo.</p>
         <div class="actions" id="library-actions">
           <button class="btn" id="btn-scan">Escanear ahora</button>
           <label class="check"><input type="checkbox" id="only-missing"> Solo faltantes</label>
           <span class="lede" id="scan-count"></span>
         </div>
+        <div class="tabs" id="lib-tabs" role="tablist" aria-label="Bibliotecas"></div>
         <div id="library-panel">
           <div class="lib-head" aria-hidden="true">
             <span></span>
@@ -40,11 +42,14 @@
           </div>
           <div id="library" class="library"><p class="empty loading">Leyendo la biblioteca…</p></div>
         </div>
-        <h2 id="queue-title">Cola</h2>
+      </section>
+
+      <section id="view-queue" class="hidden">
+        <h1>Cola</h1>
         <p class="lede" id="queue-lede">Los resultados aparecen acá, uno por uno.</p>
         <div class="table-wrap">
           <table class="table" id="events-table">
-            <thead><tr><th>Título</th><th>Acción</th><th>Detalle</th></tr></thead>
+            <thead><tr><th>Título</th><th>Acción</th><th>Proveedor</th><th>Detalle</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>

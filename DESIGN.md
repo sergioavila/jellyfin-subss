@@ -113,8 +113,9 @@ Cinematic video, 540ms entry, and page transitions stay in the system for other 
 
 - Brand: `app-logo.png` wordmark, height `clamp(64px, 18vw, 96px)`, width auto. No separate title. Favicon/store: `icon.png`
 - Primary = Escanear ahora / Guardar / Se queda
-- Ghost = Probar Jellyfin, Probar OpenSubtitles
-- Nav Inicio/Revisar/Ajustes: weight 500 + accent underline when on
+- Ghost = Probar Jellyfin, Probar OpenSubtitles, Reintentar
+- Nav Inicio/Cola/Revisar/Ajustes: weight 500 + accent underline when on
+- Library tabs (Películas, Series, …) reuse the same tab underline as Ajustes
 - Table: native layout, status colors OK / warn / danger / exacto
 - Empty: one table row, no extra icon set
 - Focus: 2px accent outline, offset 2px

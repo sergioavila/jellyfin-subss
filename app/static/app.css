@@ -180,13 +180,7 @@ h2 {
 .poster { width: 40px; height: 60px; object-fit: cover; background: var(--neutral); display: block; border-radius: 2px; }
 
 .library { border-top: 1px solid var(--line); overflow-x: auto; }
-.lib-cat {
-  margin: 1.5rem 0 0;
-  padding: 10px 8px 8px;
-  border-bottom: 1px solid var(--line);
-  scroll-margin-top: 8rem;
-}
-.lib-cat:first-child { margin-top: 0; }
+#lib-tabs { max-width: none; margin-bottom: 0; }
 .actions .check { margin-top: 0; }
 .lib-head, .lib-row {
   display: grid;
@@ -212,7 +206,7 @@ h2 {
   border-bottom: 1px solid var(--line);
 }
 .lib-line > .lib-check { padding-top: 8px; }
-.lib > summary, .lib-season > summary {
+.lib > summary {
   display: grid;
   grid-template-columns: 40px minmax(12ch, 1.5fr) minmax(12ch, 1fr) minmax(12ch, 1fr);
   gap: 8px 12px;
@@ -220,11 +214,19 @@ h2 {
   cursor: pointer;
   padding: 8px 0;
 }
-.lib > summary::-webkit-details-marker, .lib-season > summary::-webkit-details-marker { color: var(--muted); }
+.lib > summary::-webkit-details-marker { color: var(--muted); }
 .lib-check { display: flex; align-items: center; }
 .lib-title { font-weight: 500; overflow-wrap: anywhere; }
 .lib-have, .lib-miss { font-family: var(--mono); font-size: 0.875rem; overflow-wrap: anywhere; }
-.lib-season { margin: 0 0 8px 12px; }
+.lib-season { margin: 0 0 12px; }
+.lib-season-head {
+  display: grid;
+  grid-template-columns: minmax(12ch, 1.5fr) minmax(12ch, 1fr) minmax(12ch, 1fr);
+  gap: 8px 12px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
 .lib-eps { width: 100%; }
 .lib-eps td:first-child { width: 28px; }
 #scan-count { margin: 0; align-self: center; }
@@ -415,7 +417,7 @@ option { color: var(--text); }
   .stat { min-width: 0; }
   .grid2 { grid-template-columns: 1fr; }
   .actions { flex-direction: column; }
-  .actions .btn { width: 100%; min-height: 44px; }
+  .actions .btn, .table .btn { width: 100%; min-height: 44px; }
   .check { min-height: 44px; }
   .theater-bar { flex-direction: column; align-items: stretch; }
 }

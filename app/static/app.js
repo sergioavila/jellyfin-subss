@@ -7,7 +7,8 @@ const state = {
   toastTimer: null,
   library: null,
   wasRunning: false,
-  hideLibrary: false,
+  cat: "",
+  picked: new Set(),
 };
 
 const ACTION = {
@@ -35,21 +36,15 @@ $("#btn-scan").addEventListener("click", async () => {
     return;
   }
   $("#btn-scan").disabled = true;
-  state.hideLibrary = true;
-  setQueueMode(true);
   const res = await fetch("/api/scan", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ids }),
   });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    state.hideLibrary = false;
-    setQueueMode(false);
-  }
   toast(res.ok ? `Cola de ${ids.length}.` : body.detail || "No se pudo escanear.", res.ok);
+  if (res.ok) show("queue");
   await refresh();
-  $("#btn-scan").disabled = false;
 });
 $("#only-missing").addEventListener("change", () => {
   if (state.library) renderLibrary();
@@ -67,7 +62,27 @@ $("#library").addEventListener("change", (ev) => {
   }
   const series = box.closest("[data-series]");
   if (series) syncGroupChecks(series);
+  syncPicked();
   updateScanCount();
+});
+$("#lib-tabs").addEventListener("click", (ev) => {
+  const btn = ev.target.closest("[data-lib-tab]");
+  if (!btn) return;
+  state.cat = btn.getAttribute("data-lib-tab");
+  renderLibrary();
+});
+$("#events-table").addEventListener("click", async (ev) => {
+  const btn = ev.target.closest("[data-retry]");
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
+  const res = await fetch("/api/retry", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: btn.getAttribute("data-id"), language: btn.getAttribute("data-lang") || "" }),
+  });
+  const body = await res.json().catch(() => ({}));
+  toast(res.ok ? "Reintento en cola." : body.detail || "No se pudo reintentar.", res.ok);
+  await refresh();
 });
 $("#toast-dismiss").addEventListener("click", hideToast);
 
@@ -195,7 +210,7 @@ function show(name) {
     if (b.dataset.view === name) b.setAttribute("aria-current", "page");
     else b.removeAttribute("aria-current");
   });
-  if (name === "home" && !queueActive()) loadLibrary();
+  if (name === "home") loadLibrary();
   if (name === "review") openReview();
 }
 
@@ -220,14 +235,6 @@ function queueActive() {
   return !!(state.data && state.data.worker && state.data.worker.running);
 }
 
-function setQueueMode(on) {
-  $("#library-panel").classList.toggle("hidden", on);
-  $("#library-actions").classList.toggle("hidden", on);
-  $("#queue-title").classList.toggle("hidden", on);
-  $("#home-title").textContent = on ? "Cola" : "Biblioteca";
-  if (on) $("#home-lede").textContent = "Armando la cola…";
-}
-
 function renderHome() {
   const d = state.data;
   const w = d.worker || {};
@@ -237,16 +244,17 @@ function renderHome() {
     : server.ServerName
       ? `${server.ServerName} · ${w.running ? w.phase : "en espera"}`
       : "Sin conexión";
-  if (w.running) state.hideLibrary = true;
-  if (state.wasRunning && !w.running) state.hideLibrary = false;
-  setQueueMode(!!w.running || state.hideLibrary);
-  $("#home-lede").textContent = w.running
-    ? `${w.phase} ${w.current || ""}`
-    : "Marca series, temporadas o títulos y pulsa Escanear ahora. El escaneo automático sigue cubriendo todo solo.";
   $("#btn-scan").disabled = !!w.running;
   renderQueue();
   if (state.wasRunning && !w.running) loadLibrary(true);
   state.wasRunning = !!w.running;
+}
+
+function rowProvider(e) {
+  if (e.provider) return e.provider;
+  const detail = e.detail || "";
+  const m = detail.match(/·\s*([^:]+):/);
+  return m ? m[1].trim() : "";
 }
 
 function renderQueue() {
@@ -255,35 +263,41 @@ function renderQueue() {
   const events = (state.data && state.data.events) || [];
   const rows = queue.length ? queue : events;
   const done = queue.filter((q) => q.status && q.status !== "pending" && q.status !== "running").length;
-  $("#queue-lede").textContent = w.error
+  const lede = $("#queue-lede");
+  lede.textContent = w.error
     ? w.error
     : w.running
       ? `Cola ${done}/${queue.length || 0}`
       : queue.length
-        ? "Última cola."
+        ? "Última cola. Reintenta los que fallaron."
         : "Los resultados aparecen acá, uno por uno.";
-  if (w.error) $("#queue-lede").classList.add("bad");
-  else $("#queue-lede").classList.remove("bad");
+  if (w.error) lede.classList.add("bad");
+  else lede.classList.remove("bad");
   const tb = $("#events-table tbody");
   if (!rows.length && w.error) {
-    tb.innerHTML = `<tr><td colspan="3" class="empty">${esc(w.error)}</td></tr>`;
+    tb.innerHTML = `<tr><td colspan="5" class="empty">${esc(w.error)}</td></tr>`;
     return;
   }
   tb.innerHTML = rows.length
     ? rows
         .map((e) => {
-          const [label, cls] = ACTION[e.status || e.action] || [e.status || e.action, ""];
+          const status = e.status || e.action;
+          const [label, cls] = ACTION[status] || [status, ""];
           const extra = e.hash_match ? ` <span class="badge gold">exacto</span>` : "";
           const title = e.language ? `${e.title} · ${langLabel(e.language)}` : e.title;
-          return `<tr><td>${esc(title)}</td><td><span class="badge ${cls}">${label}</span>${extra}</td><td>${esc(e.detail || "")}</td></tr>`;
+          const iid = e.id || e.item_id || "";
+          const retry =
+            iid && (status === "error" || status === "empty") && !w.running
+              ? `<button class="btn btn-ghost" type="button" data-retry data-id="${esc(iid)}" data-lang="${esc(e.language || "")}">Reintentar</button>`
+              : "";
+          return `<tr><td>${esc(title)}</td><td><span class="badge ${cls}">${label}</span>${extra}</td><td>${esc(rowProvider(e) || "—")}</td><td>${esc(e.detail || "")}</td><td>${retry}</td></tr>`;
         })
         .join("")
-    : `<tr><td colspan="3" class="empty">Todavía no hay actividad.</td></tr>`;
+    : `<tr><td colspan="5" class="empty">Todavía no hay actividad.</td></tr>`;
 }
 
 async function loadLibrary(force) {
   const box = $("#library");
-  if (queueActive()) return;
   if (!force && state.library) return;
   box.innerHTML = `<p class="empty loading">Leyendo la biblioteca…</p>`;
   const res = await fetch(`/api/library${force ? "?fresh=1" : ""}`);
@@ -308,23 +322,43 @@ function filterGroup(g, only) {
   return seasons.length ? { ...g, seasons } : null;
 }
 
+function visibleCats() {
+  const only = $("#only-missing") && $("#only-missing").checked;
+  return (state.library || [])
+    .map((cat) => ({
+      name: cat.name,
+      groups: (cat.groups || []).map((g) => filterGroup(g, only)).filter(Boolean),
+    }))
+    .filter((cat) => cat.groups.length);
+}
+
+function renderLibTabs(cats) {
+  const nav = $("#lib-tabs");
+  if (!cats.length) {
+    nav.innerHTML = "";
+    return;
+  }
+  if (!cats.some((c) => c.name === state.cat)) state.cat = cats[0].name;
+  nav.innerHTML = cats
+    .map(
+      (c) =>
+        `<button type="button" role="tab" data-lib-tab="${esc(c.name)}" aria-selected="${c.name === state.cat ? "true" : "false"}">${esc(c.name)}</button>`
+    )
+    .join("");
+}
+
 function renderLibrary() {
   const box = $("#library");
-  const cats = state.library || [];
-  const only = $("#only-missing") && $("#only-missing").checked;
-  const html = [];
-  for (const cat of cats) {
-    const groups = (cat.groups || []).map((g) => filterGroup(g, only)).filter(Boolean);
-    if (!groups.length) continue;
-    html.push(`<h2 class="lib-cat">${esc(cat.name)}</h2>`);
-    html.push(...groups.map(renderGroup));
-  }
-  if (!html.length) {
-    box.innerHTML = `<p class="empty">${only ? "Nada falta en los idiomas pedidos." : "La biblioteca está vacía."}</p>`;
+  const cats = visibleCats();
+  renderLibTabs(cats);
+  const cat = cats.find((c) => c.name === state.cat) || cats[0];
+  if (!cat) {
+    box.innerHTML = `<p class="empty">${$("#only-missing") && $("#only-missing").checked ? "Nada falta en los idiomas pedidos." : "La biblioteca está vacía."}</p>`;
     updateScanCount();
     return;
   }
-  box.innerHTML = html.join("");
+  box.innerHTML = cat.groups.map(renderGroup).join("");
+  restorePicked();
   updateScanCount();
 }
 
@@ -369,17 +403,16 @@ function renderSeason(s) {
       </tr>`;
     })
     .join("");
-  return `<div class="lib-line">
+  return `<div class="lib-line" data-season>
     <span class="lib-check"><input type="checkbox" data-pick="season"></span>
-    <details class="lib-season">
-      <summary>
-        <span></span>
+    <div class="lib-season">
+      <div class="lib-season-head">
         <span class="lib-title">${esc(s.title)}</span>
         <span class="lib-have">${havePills(s)}</span>
         <span class="lib-miss">${missPills(s)}</span>
-      </summary>
+      </div>
       <table class="table lib-eps"><tbody>${eps}</tbody></table>
-    </details>
+    </div>
   </div>`;
 }
 
@@ -402,9 +435,23 @@ function missPills(row) {
 }
 
 function selectedIds() {
-  return [...document.querySelectorAll('#library input[data-pick="item"]:checked')]
-    .map((el) => el.getAttribute("data-id"))
-    .filter(Boolean);
+  return [...state.picked];
+}
+
+function syncPicked() {
+  document.querySelectorAll('#library input[data-pick="item"]').forEach((el) => {
+    const id = el.getAttribute("data-id");
+    if (!id) return;
+    if (el.checked) state.picked.add(id);
+    else state.picked.delete(id);
+  });
+}
+
+function restorePicked() {
+  document.querySelectorAll('#library input[data-pick="item"]').forEach((el) => {
+    el.checked = state.picked.has(el.getAttribute("data-id"));
+  });
+  document.querySelectorAll("[data-series]").forEach(syncGroupChecks);
 }
 
 function syncGroupChecks(root) {

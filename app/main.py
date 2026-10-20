@@ -240,6 +240,24 @@ async def scan(request: Request):
     return {"ok": True}
 
 
+@app.post("/api/retry")
+async def retry(request: Request):
+    payload = {}
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+    item_id = str((payload or {}).get("id") or "")
+    language = str((payload or {}).get("language") or "")
+    if not item_id:
+        raise HTTPException(400, "Falta el título")
+    try:
+        worker.start_retry(item_id, language)
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return {"ok": True}
+
+
 def _play_lang(item: dict, requested: str, settings: dict) -> str:
     if requested:
         return requested
