@@ -1,0 +1,7 @@
+{
+  "id": "jellyfin-subss",
+  "version": "1.0.0",
+  "image": "ghcr.io/sergioavila/jellyfin-subss",
+  "youtube": "",
+  "docs_link": ""
+}

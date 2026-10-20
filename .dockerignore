@@ -1,0 +1,12 @@
+.git
+.github
+.venv
+__pycache__
+*.pyc
+data
+*.md
+Apps
+tests
+category-list.json
+recommend-list.json
+logo-app.png

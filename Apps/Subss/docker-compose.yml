@@ -1,0 +1,193 @@
+name: jellyfin-subss
+services:
+  subss:
+    image: ghcr.io/sergioavila/jellyfin-subss:latest
+    container_name: subss
+    restart: unless-stopped
+    labels:
+      icon: https://cdn.jsdelivr.net/gh/sergioavila/jellyfin-subss@main/Apps/Subss/icon.png
+    network_mode: bridge
+    environment:
+      TZ: $TZ
+      DATA_DIR: /data
+    ports:
+      - target: 8787
+        published: "8787"
+        protocol: tcp
+    volumes:
+      - type: bind
+        source: /DATA/AppData/$AppID/config
+        target: /data
+      - type: bind
+        source: /DATA/Media
+        target: /media
+    x-casaos:
+      envs:
+        - container: TZ
+          description:
+            en_us: Timezone
+            en_US: Timezone
+            es_es: Zona horaria
+            es_ES: Zona horaria
+        - container: DATA_DIR
+          description:
+            en_us: App config directory
+            en_US: App config directory
+            es_es: Configuración de Subss
+            es_ES: Configuración de Subss
+      ports:
+        - container: "8787"
+          description:
+            en_us: Web panel
+            en_US: Web panel
+            es_es: Panel web
+            es_ES: Panel web
+      volumes:
+        - container: /data
+          description:
+            en_us: Subss database and settings
+            en_US: Subss database and settings
+            es_es: Base y ajustes de Subss
+            es_ES: Base y ajustes de Subss
+        - container: /media
+          description:
+            en_us: Same media folder Jellyfin uses (needed for timing sync)
+            en_US: Same media folder Jellyfin uses (needed for timing sync)
+            es_es: La misma carpeta de medios que usa Jellyfin (hace falta para sincronizar)
+            es_ES: La misma carpeta de medios que usa Jellyfin (hace falta para sincronizar)
+x-casaos:
+  id: app.sergioavila.jellyfin-subss
+  architectures:
+    - amd64
+    - arm64
+  main: subss
+  index: /
+  port_map: "8787"
+  scheme: http
+  title:
+    en_us: Subss
+    en_US: Subss
+    es_es: Subss
+    es_ES: Subss
+  tagline:
+    en_us: Auto subtitles for your Jellyfin library
+    en_US: Auto subtitles for your Jellyfin library
+    es_es: Subtítulos automáticos para tu biblioteca Jellyfin
+    es_ES: Subtítulos automáticos para tu biblioteca Jellyfin
+  description:
+    en_us: |
+      **Subss**
+
+      Auto subtitles for your Jellyfin library.
+
+      Subss reads Jellyfin, finds titles missing the languages you marked, and downloads subtitles from the same kind of sites Bazarr uses. It is not a Jellyfin plugin. Jellyfin only lists the library and receives the finished file.
+
+      Open the web panel to pick languages, scan selected titles, and review matches that were not exact.
+
+      **Getting started**
+      1. Create an API key in Jellyfin (Dashboard → API Keys).
+      2. Map the container’s `/media` directory to the same library folder Jellyfin uses.
+      3. Open the panel and set the Jellyfin URL to your NAS IP (not localhost), the API key, and the languages you want.
+      4. Enable the providers you want. Several work without an account.
+
+      **Important precautions**
+      - This app downloads subtitle files and uploads them into Jellyfin. Wrong language settings can attach the wrong track.
+      - Only map the media folder Jellyfin already uses. Avoid granting access to unrelated files.
+      - Review non-exact matches in the panel before leaving them installed.
+      - Do not expose port 8787 to the internet. The panel has no login.
+
+      **Disclaimer**
+      This software is provided “as is,” without warranties of any kind, to the extent permitted by applicable law. You are responsible for your configuration, Jellyfin API key, directory mappings, and backups.
+
+      Subss is an independent project and is not affiliated with or endorsed by Jellyfin or CasaOS.
+    en_US: |
+      **Subss**
+
+      Auto subtitles for your Jellyfin library.
+
+      Subss reads Jellyfin, finds titles missing the languages you marked, and downloads subtitles from the same kind of sites Bazarr uses. It is not a Jellyfin plugin. Jellyfin only lists the library and receives the finished file.
+
+      Open the web panel to pick languages, scan selected titles, and review matches that were not exact.
+
+      **Getting started**
+      1. Create an API key in Jellyfin (Dashboard → API Keys).
+      2. Map the container’s `/media` directory to the same library folder Jellyfin uses.
+      3. Open the panel and set the Jellyfin URL to your NAS IP (not localhost), the API key, and the languages you want.
+      4. Enable the providers you want. Several work without an account.
+
+      **Important precautions**
+      - This app downloads subtitle files and uploads them into Jellyfin. Wrong language settings can attach the wrong track.
+      - Only map the media folder Jellyfin already uses. Avoid granting access to unrelated files.
+      - Review non-exact matches in the panel before leaving them installed.
+      - Do not expose port 8787 to the internet. The panel has no login.
+
+      **Disclaimer**
+      This software is provided “as is,” without warranties of any kind, to the extent permitted by applicable law. You are responsible for your configuration, Jellyfin API key, directory mappings, and backups.
+
+      Subss is an independent project and is not affiliated with or endorsed by Jellyfin or CasaOS.
+    es_es: |
+      **Subss**
+
+      Subtítulos automáticos para tu biblioteca Jellyfin.
+
+      Subss lee Jellyfin, encuentra los títulos a los que les falta alguno de los idiomas que marcaste y baja subtítulos de los mismos tipos de sitios que usa Bazarr. No es un plugin de Jellyfin. Jellyfin solo entrega la lista y recibe el archivo ya bajado.
+
+      Abre el panel para elegir idiomas, escanear títulos y revisar las coincidencias que no fueron exactas.
+
+      **Cómo empezar**
+      1. Crea una API key en Jellyfin (Dashboard → API Keys).
+      2. Mapea `/media` del contenedor a la misma carpeta de biblioteca que usa Jellyfin.
+      3. Abre el panel y pon la URL de Jellyfin con la IP del NAS (no localhost), la API key y los idiomas.
+      4. Activa los proveedores que quieras. Varios funcionan sin cuenta.
+
+      **Precauciones**
+      - Esta app baja subtítulos y los sube a Jellyfin. Un idioma mal marcado puede dejar la pista equivocada.
+      - Mapea solo la carpeta de medios que Jellyfin ya usa.
+      - Revisa en el panel las coincidencias que no fueron exactas antes de dejarlas instaladas.
+      - No expongas el puerto 8787 a internet. El panel no tiene login.
+
+      **Aviso**
+      Este software se ofrece “tal cual”, sin garantías, en la medida que permita la ley. Tú eres responsable de la configuración, la API key de Jellyfin, los volúmenes y las copias de seguridad.
+
+      Subss es un proyecto independiente y no está afiliado ni respaldado por Jellyfin ni CasaOS.
+    es_ES: |
+      **Subss**
+
+      Subtítulos automáticos para tu biblioteca Jellyfin.
+
+      Subss lee Jellyfin, encuentra los títulos a los que les falta alguno de los idiomas que marcaste y baja subtítulos de los mismos tipos de sitios que usa Bazarr. No es un plugin de Jellyfin. Jellyfin solo entrega la lista y recibe el archivo ya bajado.
+
+      Abre el panel para elegir idiomas, escanear títulos y revisar las coincidencias que no fueron exactas.
+
+      **Cómo empezar**
+      1. Crea una API key en Jellyfin (Dashboard → API Keys).
+      2. Mapea `/media` del contenedor a la misma carpeta de biblioteca que usa Jellyfin.
+      3. Abre el panel y pon la URL de Jellyfin con la IP del NAS (no localhost), la API key y los idiomas.
+      4. Activa los proveedores que quieras. Varios funcionan sin cuenta.
+
+      **Precauciones**
+      - Esta app baja subtítulos y los sube a Jellyfin. Un idioma mal marcado puede dejar la pista equivocada.
+      - Mapea solo la carpeta de medios que Jellyfin ya usa.
+      - Revisa en el panel las coincidencias que no fueron exactas antes de dejarlas instaladas.
+      - No expongas el puerto 8787 a internet. El panel no tiene login.
+
+      **Aviso**
+      Este software se ofrece “tal cual”, sin garantías, en la medida que permita la ley. Tú eres responsable de la configuración, la API key de Jellyfin, los volúmenes y las copias de seguridad.
+
+      Subss es un proyecto independiente y no está afiliado ni respaldado por Jellyfin ni CasaOS.
+  author: Checho
+  developer: Checho
+  category: Media
+  icon: https://cdn.jsdelivr.net/gh/sergioavila/jellyfin-subss@main/Apps/Subss/icon.png
+  thumbnail: https://cdn.jsdelivr.net/gh/sergioavila/jellyfin-subss@main/Apps/Subss/icon.png
+  version: "1.0.0"
+  tips:
+    before_install:
+      en_us: |
+        Create a Jellyfin API key first (Dashboard → API Keys). After install, open the panel and set the Jellyfin URL to your NAS IP, not localhost. Map /media to the same library Jellyfin uses. Do not expose port 8787 to the internet. The panel has no login.
+      en_US: |
+        Create a Jellyfin API key first (Dashboard → API Keys). After install, open the panel and set the Jellyfin URL to your NAS IP, not localhost. Map /media to the same library Jellyfin uses. Do not expose port 8787 to the internet. The panel has no login.
+      es_es: |
+        Crea primero una API key en Jellyfin (Dashboard → API Keys). Después de instalar, abre el panel y pon la URL de Jellyfin con la IP del NAS, no localhost. Mapea /media a la misma biblioteca que usa Jellyfin. No expongas el puerto 8787 a internet. El panel no tiene login.
+      es_ES: |
+        Crea primero una API key en Jellyfin (Dashboard → API Keys). Después de instalar, abre el panel y pon la URL de Jellyfin con la IP del NAS, no localhost. Mapea /media a la misma biblioteca que usa Jellyfin. No expongas el puerto 8787 a internet. El panel no tiene login.

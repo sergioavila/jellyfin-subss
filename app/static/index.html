@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Subss</title>
+  <link rel="icon" href="/static/icon.png" type="image/png">
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Rubik:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <img class="brand" src="/static/app-logo.png" alt="Subss" width="240" height="96">
+      <nav>
+        <button type="button" data-view="home" aria-current="page">Inicio</button>
+        <button type="button" data-view="review">Revisar</button>
+        <button type="button" data-view="settings">Ajustes</button>
+      </nav>
+      <p class="status" id="app-status">Sin conexión</p>
+    </header>
+    <main>
+      <section id="view-home">
+        <h1 id="home-title">Biblioteca</h1>
+        <p class="lede" id="home-lede">Marca series, temporadas o títulos y pulsa Escanear ahora. El escaneo automático sigue cubriendo todo solo.</p>
+        <div class="actions" id="library-actions">
+          <button class="btn" id="btn-scan">Escanear ahora</button>
+          <label class="check"><input type="checkbox" id="only-missing"> Solo faltantes</label>
+          <span class="lede" id="scan-count"></span>
+        </div>
+        <div id="library-panel">
+          <div class="lib-head" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span>Título</span>
+            <span>Hay</span>
+            <span>Falta</span>
+          </div>
+          <div id="library" class="library"><p class="empty loading">Leyendo la biblioteca…</p></div>
+        </div>
+        <h2 id="queue-title">Cola</h2>
+        <p class="lede" id="queue-lede">Los resultados aparecen acá, uno por uno.</p>
+        <div class="table-wrap">
+          <table class="table" id="events-table">
+            <thead><tr><th>Título</th><th>Acción</th><th>Detalle</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="view-review" class="hidden">
+        <h1>Probar en sala</h1>
+        <p class="lede">Los que coinciden por hash se instalan solos. Estos no: míralos un minuto y decide.</p>
+        <div id="review-empty" class="empty">No hay nada pendiente de revisar.</div>
+        <div id="review-box" class="hidden">
+          <div class="theater">
+            <video id="player" class="hidden" controls playsinline></video>
+            <div class="theater-bar">
+              <div>
+                <div class="play-title" id="review-title"></div>
+                <div class="lede play-help" id="review-help"></div>
+              </div>
+              <div class="actions">
+                <button class="btn" id="btn-keep">Se queda</button>
+                <button class="btn btn-bad" id="btn-drop">Tirar y buscar otro</button>
+              </div>
+            </div>
+          </div>
+          <p class="lede" id="review-queue-label"></p>
+        </div>
+      </section>
+
+      <section id="view-settings" class="hidden">
+        <h1>Ajustes</h1>
+        <p class="lede">Jellyfin solo presta la biblioteca. Los subtítulos salen de los mismos proveedores que usa Bazarr, no de un plugin.</p>
+        <div class="tabs" role="tablist" aria-label="Ajustes">
+          <button type="button" role="tab" data-settings-tab="idioma" aria-selected="true">Idioma</button>
+          <button type="button" role="tab" data-settings-tab="jellyfin" aria-selected="false">Jellyfin</button>
+          <button type="button" role="tab" data-settings-tab="proveedores" aria-selected="false">Proveedores</button>
+        </div>
+        <form class="stack" id="settings-form">
+          <div class="card" id="tab-idioma" role="tabpanel">
+            <h2>Idioma y escaneo</h2>
+            <p class="lede">Marca todos los que quieres en la biblioteca. El escaneo busca cada uno por separado.</p>
+            <fieldset class="langs">
+              <legend>Idiomas</legend>
+              <div class="lang-group">
+                <p class="lang-group-name">Español</p>
+                <label class="check"><input type="checkbox" name="lang" value="es-419"> Latino</label>
+                <label class="check"><input type="checkbox" name="lang" value="es-ES"> España</label>
+              </div>
+              <div class="lang-group">
+                <p class="lang-group-name">English</p>
+                <label class="check"><input type="checkbox" name="lang" value="en"> Inglés</label>
+                <label class="check"><input type="checkbox" name="lang" value="en-GB"> Reino Unido</label>
+              </div>
+              <div class="lang-group">
+                <p class="lang-group-name">Português</p>
+                <label class="check"><input type="checkbox" name="lang" value="pt-BR"> Brasil</label>
+                <label class="check"><input type="checkbox" name="lang" value="pt-PT"> Portugal</label>
+              </div>
+              <div class="lang-group">
+                <p class="lang-group-name">Français</p>
+                <label class="check"><input type="checkbox" name="lang" value="fr"> Francia</label>
+                <label class="check"><input type="checkbox" name="lang" value="fr-CA"> Canadá</label>
+              </div>
+              <div class="lang-group">
+                <p class="lang-group-name">Otros</p>
+                <label class="check"><input type="checkbox" name="lang" value="de"> Alemán</label>
+                <label class="check"><input type="checkbox" name="lang" value="it"> Italiano</label>
+                <label class="check"><input type="checkbox" name="lang" value="ja"> Japonés</label>
+                <label class="check"><input type="checkbox" name="lang" value="ko"> Coreano</label>
+                <label class="check"><input type="checkbox" name="lang" value="zh-Hans"> Chino simplificado</label>
+                <label class="check"><input type="checkbox" name="lang" value="zh-Hant"> Chino tradicional</label>
+              </div>
+            </fieldset>
+            <div class="grid2">
+              <div>
+                <label for="scan_hours">Escaneo cada (horas)</label>
+                <input id="scan_hours" name="scan_hours" type="number" min="1" max="168">
+              </div>
+              <div>
+                <label for="rate_limit_s">Pausa entre títulos (s)</label>
+                <input id="rate_limit_s" name="rate_limit_s" type="number" min="1" max="30">
+              </div>
+              <div class="span2">
+                <label for="path_maps">Mapa de rutas (Jellyfin → este contenedor), una por línea: /data/media=/media</label>
+                <textarea id="path_maps" name="path_maps" rows="3"></textarea>
+              </div>
+            </div>
+            <label class="check"><input type="checkbox" id="prefer_hash" name="prefer_hash"> Preferir coincidencia exacta de hash al elegir</label>
+            <label class="check"><input type="checkbox" id="autosync" name="autosync"> Corregir desfase con ffsubsync si no hay hash</label>
+            <label class="check"><input type="checkbox" id="include_hi" name="include_hi"> Incluir pistas para hipoacúsicos</label>
+          </div>
+          <div class="card hidden" id="tab-jellyfin" role="tabpanel">
+            <h2>Jellyfin</h2>
+            <p class="lede">Dashboard → API Keys. No hace falta el plugin de OpenSubtitles.</p>
+            <div class="grid2">
+              <div>
+                <label for="jellyfin_url">URL de Jellyfin</label>
+                <input id="jellyfin_url" name="jellyfin_url" type="text" placeholder="http://192.168.1.10:8096" autocomplete="off">
+              </div>
+              <div>
+                <label for="api_key">API key de Jellyfin</label>
+                <input id="api_key" name="api_key" type="password" autocomplete="off">
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn btn-ghost" type="button" id="btn-test">Probar Jellyfin</button>
+            </div>
+            <div class="flash" id="jf-flash"></div>
+          </div>
+          <div class="card hidden" id="tab-proveedores" role="tabpanel">
+            <h2>Proveedores</h2>
+            <p class="lede">De la lista de Bazarr, estos son los que sirven inglés o español. El resto es un solo idioma (griego, polaco, turco…). Cada sitio se prueba y se puede apagar.</p>
+            <div id="provider-list" class="providers"></div>
+          </div>
+          <div class="actions">
+            <button class="btn" type="submit">Guardar</button>
+          </div>
+          <div class="flash" id="settings-flash"></div>
+        </form>
+      </section>
+    </main>
+  </div>
+  <div id="toast" class="toast hidden" role="status">
+    <p id="toast-text"></p>
+    <button type="button" id="toast-dismiss">Cerrar</button>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

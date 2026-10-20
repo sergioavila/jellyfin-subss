@@ -1,0 +1,68 @@
+name: subss
+services:
+  subss:
+    image: ghcr.io/sergioavila/jellyfin-subss:latest
+    container_name: subss
+    restart: unless-stopped
+    labels:
+      icon: https://cdn.jsdelivr.net/gh/sergioavila/jellyfin-subss@main/Apps/Subss/icon.png
+    network_mode: bridge
+    environment:
+      TZ: $TZ
+      DATA_DIR: /data
+    ports:
+      - target: 8787
+        published: "8787"
+        protocol: tcp
+    volumes:
+      - type: bind
+        source: /DATA/AppData/$AppID/config
+        target: /data
+      - type: bind
+        source: /DATA/Media
+        target: /media
+    x-casaos:
+      envs:
+        - container: TZ
+          description:
+            en_us: Timezone
+            es_419: Zona horaria
+        - container: DATA_DIR
+          description:
+            en_us: App config directory
+            es_419: Configuración de Subss
+      ports:
+        - container: "8787"
+          description:
+            en_us: Web UI
+            es_419: Interfaz web
+      volumes:
+        - container: /data
+          description:
+            en_us: Subss database and settings
+            es_419: Base y ajustes de Subss
+        - container: /media
+          description:
+            en_us: Same media folder Jellyfin uses (needed for ffsubsync)
+            es_419: La misma carpeta de medios que usa Jellyfin (hace falta para sincronizar)
+
+x-casaos:
+  architectures:
+    - amd64
+    - arm64
+  main: subss
+  index: /
+  port_map: "8787"
+  scheme: http
+  title:
+    en_us: Subss
+    es_419: Subss
+  tagline:
+    en_us: Auto subtitles for your Jellyfin library
+    es_419: Subtítulos automáticos para tu biblioteca Jellyfin
+  description:
+    en_us: Scans Jellyfin, downloads the languages you marked, prefers hash matches, then optional ffsubsync and an in-app player to try the rest.
+    es_419: Lee Jellyfin, baja los idiomas que marcas, prioriza coincidencia de hash, corrige el desfase y te deja probarlo en un reproductor.
+  developer: Checho
+  category: Media
+  icon: https://cdn.jsdelivr.net/gh/sergioavila/jellyfin-subss@main/Apps/Subss/icon.png
