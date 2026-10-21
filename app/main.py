@@ -88,7 +88,7 @@ async def lifespan(_app: FastAPI):
         scheduler.shutdown(wait=False)
 
 
-app = FastAPI(title="Subss", lifespan=lifespan)
+app = FastAPI(title="Jellyfin Subss", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 

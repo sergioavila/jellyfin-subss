@@ -1,4 +1,4 @@
-# Subss
+# Jellyfin Subss
 
 Lee tu biblioteca de Jellyfin y busca subtítulos en los sitios de Bazarr que sirven inglés o español. No usa el plugin de OpenSubtitles de Jellyfin: Jellyfin solo entrega la lista de películas y recibe el archivo ya bajado.
 
@@ -13,7 +13,7 @@ Cuando el repo sea público y la imagen de Docker esté lista:
 https://github.com/sergioavila/jellyfin-subss/archive/refs/heads/main.zip
 ```
 
-3. Instala **Subss** (categoría Media)
+3. Instala **Jellyfin Subss** (categoría Media)
 4. En volúmenes, `/media` debe apuntar a tu librería (`/DATA/Media`)
 5. Abre el panel → Ajustes → URL de Jellyfin (IP del NAS, no localhost) + API key → idiomas → proveedores
 

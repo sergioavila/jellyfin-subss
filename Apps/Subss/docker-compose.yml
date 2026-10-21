@@ -1,7 +1,7 @@
 name: jellyfin-subss
 services:
   subss:
-    image: ghcr.io/sergioavila/jellyfin-subss:1.2.0
+    image: ghcr.io/sergioavila/jellyfin-subss:1.2.1
     container_name: subss
     restart: unless-stopped
     labels:
@@ -65,10 +65,10 @@ x-casaos:
   port_map: "8787"
   scheme: http
   title:
-    en_us: Subss
-    en_US: Subss
-    es_es: Subss
-    es_ES: Subss
+    en_us: Jellyfin Subss
+    en_US: Jellyfin Subss
+    es_es: Jellyfin Subss
+    es_ES: Jellyfin Subss
   tagline:
     en_us: Auto subtitles and AI translation for Jellyfin
     en_US: Auto subtitles and AI translation for Jellyfin
@@ -76,7 +76,7 @@ x-casaos:
     es_ES: Subtítulos automáticos y traducción IA para Jellyfin
   description:
     en_us: |
-      **Subss**
+      **Jellyfin Subss**
 
       Auto subtitles and AI translation for your Jellyfin library.
 
@@ -102,7 +102,7 @@ x-casaos:
 
       Subss is an independent project and is not affiliated with or endorsed by Jellyfin or CasaOS.
     en_US: |
-      **Subss**
+      **Jellyfin Subss**
 
       Auto subtitles and AI translation for your Jellyfin library.
 
@@ -128,7 +128,7 @@ x-casaos:
 
       Subss is an independent project and is not affiliated with or endorsed by Jellyfin or CasaOS.
     es_es: |
-      **Subss**
+      **Jellyfin Subss**
 
       Subtítulos automáticos y traducción con IA para tu biblioteca Jellyfin.
 
@@ -154,7 +154,7 @@ x-casaos:
 
       Subss es un proyecto independiente y no está afiliado ni respaldado por Jellyfin ni CasaOS.
     es_ES: |
-      **Subss**
+      **Jellyfin Subss**
 
       Subtítulos automáticos y traducción con IA para tu biblioteca Jellyfin.
 
@@ -184,7 +184,7 @@ x-casaos:
   category: Media
   icon: https://cdn.jsdelivr.net/gh/sergioavila/jellyfin-subss@main/Apps/Subss/icon.png
   thumbnail: https://cdn.jsdelivr.net/gh/sergioavila/jellyfin-subss@main/Apps/Subss/icon.png
-  version: "1.2.0"
+  version: "1.2.1"
   tips:
     before_install:
       en_us: |

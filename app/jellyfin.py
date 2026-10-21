@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 
 import httpx
 
-CLIENT = 'MediaBrowser Client="Subss", Device="CasaOS", DeviceId="subss-casaos", Version="0.1.0"'
+CLIENT = 'MediaBrowser Client="Jellyfin Subss", Device="CasaOS", DeviceId="subss-casaos", Version="0.1.0"'
 
 
 class JellyfinError(RuntimeError):

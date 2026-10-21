@@ -55,8 +55,8 @@ x-casaos:
   port_map: "8787"
   scheme: http
   title:
-    en_us: Subss
-    es_419: Subss
+    en_us: Jellyfin Subss
+    es_419: Jellyfin Subss
   tagline:
     en_us: Auto subtitles for your Jellyfin library
     es_419: Subtítulos automáticos para tu biblioteca Jellyfin

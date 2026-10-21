@@ -63,7 +63,7 @@ Do: full-screen video on landings, massive uppercase, Rubik bold, custom SVG CTA
 
 ---
 
-# Subss — application
+# Jellyfin Subss — application
 
 Utility panel for a NAS. Not a marketing site. This section maps the system above onto the implemented panel.
 

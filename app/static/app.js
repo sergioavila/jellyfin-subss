@@ -650,7 +650,7 @@ function startPlayer(play) {
   if (play.vtt) {
     const track = document.createElement("track");
     track.kind = "subtitles";
-    track.label = "Subss";
+    track.label = "Jellyfin Subss";
     track.srclang = play.lang || "es";
     track.src = play.vtt;
     track.default = true;
