@@ -28,9 +28,11 @@ DEFAULTS = {
     "os_api_key": "",
     "os_use_hash": True,
     "podnapisi_enabled": True,
+    "gemini_api_key": "",
+    "tmdb_api_key": "",
 }
 
-SECRETS = ("api_key", "os_password", "os_api_key")
+SECRETS = ("api_key", "os_password", "os_api_key", "gemini_api_key", "tmdb_api_key")
 
 _lock = threading.RLock()
 _conn: sqlite3.Connection | None = None
@@ -230,7 +232,7 @@ def recent_events(limit: int = 40) -> list[dict]:
 def review_queue() -> list[dict]:
     with _lock:
         rows = db().execute(
-            "SELECT * FROM events WHERE review=1 AND action IN ('downloaded','synced') ORDER BY id DESC LIMIT 50"
+            "SELECT * FROM events WHERE review=1 AND action IN ('downloaded','synced','translated') ORDER BY id DESC LIMIT 50"
         ).fetchall()
         return [dict(r) for r in rows]
 

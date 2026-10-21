@@ -176,6 +176,8 @@ def save_settings(payload: dict):
         "podnapisi_enabled",
         "enabled_providers",
         "provider_creds",
+        "gemini_api_key",
+        "tmdb_api_key",
     }
     patch = {k: payload[k] for k in allowed if k in payload}
     if "languages" in patch and not normalize_langs(patch.get("languages")):
@@ -253,6 +255,30 @@ async def retry(request: Request):
         raise HTTPException(400, "Falta el título")
     try:
         worker.start_retry(item_id, language)
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return {"ok": True}
+
+
+@app.post("/api/translate")
+async def translate(request: Request):
+    payload = {}
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+    ids = [str(x) for x in (payload.get("ids") or []) if x]
+    source = str(payload.get("source") or "").strip()
+    target = str(payload.get("target") or "").strip()
+    if not ids:
+        raise HTTPException(400, "Marca películas o capítulos para traducir")
+    if not source or not target:
+        raise HTTPException(400, "Elige idioma de origen y destino")
+    settings = db.get_settings()
+    if not (settings.get("gemini_api_key") or "").strip():
+        raise HTTPException(400, "Configura la API key de Gemini en Ajustes → Traducir")
+    try:
+        worker.start_translate(ids, source, target)
     except RuntimeError as exc:
         raise HTTPException(400, str(exc)) from exc
     return {"ok": True}

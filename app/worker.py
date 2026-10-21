@@ -8,8 +8,9 @@ from pathlib import Path
 
 from app import db
 from app.jellyfin import Jellyfin, JellyfinError
-from app.logic import map_path, missing_langs, pick_best, search_code, wanted_langs
+from app.logic import has_language, map_path, missing_langs, pick_best, search_code, wanted_langs
 from app.providers import Hub, ProviderError, file_movie_hash
+from app.translate import context_for_item, jellyfin_lang_tag, translate_srt_text
 
 log = logging.getLogger("subss")
 
@@ -349,6 +350,148 @@ def start_retry(item_id: str, language: str = "") -> None:
     threading.Thread(target=_safe_retry, args=(item_id, language), daemon=True).start()
 
 
+def start_translate(item_ids: list[str], source: str, target: str) -> None:
+    if status()["running"]:
+        raise RuntimeError("Ya hay un escaneo en curso")
+    if not item_ids:
+        raise RuntimeError("Marca películas o capítulos para traducir")
+    if not source or not target:
+        raise RuntimeError("Indica idioma de origen y destino")
+    if source == target:
+        raise RuntimeError("Origen y destino no pueden ser el mismo")
+    threading.Thread(target=_safe_translate, args=(item_ids, source, target), daemon=True).start()
+
+
+def _translate_one(
+    jf: Jellyfin,
+    item: dict,
+    settings: dict,
+    counts: dict,
+    *,
+    source: str,
+    target: str,
+    ctx_cache: dict,
+) -> tuple[str, str]:
+    title = _item_title(item)
+    streams = item.get("MediaStreams")
+    if not has_language(streams, source):
+        detail = f"{source}→{target} · sin subtítulo de origen"
+        db.add_event(item_id=item["Id"], title=title, action="empty", detail=detail, language=target)
+        return "empty", detail
+    if has_language(streams, target):
+        detail = f"{source}→{target} · ya está"
+        return "ok", detail
+
+    gemini = (settings.get("gemini_api_key") or "").strip()
+    if not gemini:
+        raise RuntimeError("Configura la API key de Gemini en Ajustes")
+
+    cache_key = item.get("SeriesId") or item["Id"]
+    if cache_key not in ctx_cache:
+        ctx_cache[cache_key] = context_for_item(
+            item, (settings.get("tmdb_api_key") or "").strip(), target
+        )
+    ctx = ctx_cache[cache_key]
+
+    _set(phase="leyendo", current=title)
+    raw = jf.fetch_subtitle_srt(item, source, settings.get("path_maps") or [])
+    _set(phase="traduciendo", current=f"{title} · {source}→{target}")
+
+    def on_batch(i, total, _n):
+        _set(phase="traduciendo", current=f"{title} · lote {i}/{total}")
+
+    translated = translate_srt_text(
+        raw,
+        api_key=gemini,
+        ctx=ctx,
+        source_lang=source,
+        target_lang=target,
+        on_batch=on_batch,
+    )
+    jf.upload_subtitle(item["Id"], translated.encode("utf-8"), jellyfin_lang_tag(target), "srt")
+    jf.refresh(item["Id"])
+    counts["downloaded"] += 1
+    detail = f"{source}→{target} · Gemini"
+    if ctx.title:
+        detail += f" · {ctx.title}"
+    db.add_event(
+        item_id=item["Id"],
+        title=title,
+        action="translated",
+        detail=detail[:400],
+        review=True,
+        language=target,
+    )
+    return "translated", detail[:400]
+
+
+def translate_once(item_ids: list[str], source: str, target: str) -> None:
+    if status()["running"]:
+        raise RuntimeError("Ya hay un escaneo en curso")
+    _set(running=True, phase="conectando", current="", error="", queue=[])
+    settings = db.get_settings()
+    job_id = db.start_job()
+    counts = {"scanned": 0, "missing": 0, "downloaded": 0, "synced": 0, "failed": 0}
+    jf: Jellyfin | None = None
+    only = [i for i in item_ids if i]
+    try:
+        if not settings["jellyfin_url"] or not settings["api_key"]:
+            raise JellyfinError("Falta la URL o la API key de Jellyfin")
+        if not (settings.get("gemini_api_key") or "").strip():
+            raise RuntimeError("Configura la API key de Gemini en Ajustes → Traducir")
+        jf = Jellyfin(settings["jellyfin_url"], settings["api_key"])
+        jf.ping()
+        videos = _load_videos(jf, only)
+        if not videos:
+            raise JellyfinError("No está en la biblioteca")
+        jobs = []
+        for item in videos:
+            jobs.append(
+                {
+                    "id": item["Id"],
+                    "title": _item_title(item),
+                    "language": target,
+                    "status": "pending",
+                    "detail": f"{source}→{target}",
+                    "provider": "Gemini",
+                    "item": item,
+                }
+            )
+        counts["missing"] = len(jobs)
+        _set(queue=[{k: v for k, v in job.items() if k != "item"} for job in jobs])
+        ctx_cache: dict = {}
+        pause = max(1, int(settings["rate_limit_s"]))
+        for index, job in enumerate(jobs):
+            item = job["item"]
+            title = job["title"]
+            counts["scanned"] += 1
+            _set(phase="traduciendo", current=f"{title} · {source}→{target}")
+            _qset(index, status="running")
+            try:
+                action, detail = _translate_one(
+                    jf, item, settings, counts, source=source, target=target, ctx_cache=ctx_cache
+                )
+                _qset(index, status=action, detail=detail, provider="Gemini")
+                if action == "error":
+                    counts["failed"] += 1
+            except Exception as exc:  # noqa: BLE001
+                counts["failed"] += 1
+                detail = f"{source}→{target} · {exc}"[:400]
+                db.add_event(item_id=item["Id"], title=title, action="error", detail=detail, language=target)
+                _qset(index, status="error", detail=detail, provider="Gemini")
+                log.exception("translate %s", title)
+            time.sleep(pause)
+        db.finish_job(job_id, status="ok", message="", **counts)
+        _set(phase="idle", current="", running=False)
+    except Exception as exc:  # noqa: BLE001
+        db.finish_job(job_id, status="error", message=str(exc)[:400], **counts)
+        _set(phase="idle", current="", running=False, error=str(exc))
+        raise
+    finally:
+        if jf:
+            jf.close()
+
+
 def _safe_scan(item_ids: list[str] | None = None) -> None:
     try:
         scan_once(item_ids)
@@ -361,3 +504,10 @@ def _safe_retry(item_id: str, language: str) -> None:
         retry_once(item_id, language)
     except Exception:
         log.exception("retry failed")
+
+
+def _safe_translate(item_ids: list[str], source: str, target: str) -> None:
+    try:
+        translate_once(item_ids, source, target)
+    except Exception:
+        log.exception("translate failed")

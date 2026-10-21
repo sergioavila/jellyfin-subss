@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+from pathlib import Path
 from typing import Iterator
 from urllib.parse import urljoin
 
@@ -137,6 +138,26 @@ class Jellyfin:
             if stream_matches_lang(stream, language) and stream.get("Path"):
                 return stream["Path"]
         return None
+
+    def fetch_subtitle_srt(self, item: dict, language: str, path_maps: list[dict] | None = None) -> str:
+        """Lee el subtítulo en `language` como texto SRT (archivo externo o stream Jellyfin)."""
+        from app.logic import map_path
+
+        path = self.external_sub_path(item, language)
+        if path:
+            local = map_path(path, path_maps or [])
+            if local and Path(local).is_file():
+                return Path(local).read_text(encoding="utf-8", errors="replace")
+        idx = self.subtitle_stream_index(item, language)
+        if idx is None:
+            raise JellyfinError(f"No hay subtítulo en {language}")
+        source = (item.get("MediaSources") or [{}])[0]
+        mid = source.get("Id") or item.get("Id")
+        res = self.request("GET", f"/Videos/{item['Id']}/{mid}/Subtitles/{idx}/Stream.srt")
+        text = res.text
+        if not text.strip():
+            raise JellyfinError(f"Subtítulo vacío en {language}")
+        return text
 
     def stream_bytes(self, path: str, extra_headers: dict | None = None) -> httpx.Response:
         headers = self._headers()

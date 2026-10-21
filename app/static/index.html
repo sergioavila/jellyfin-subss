@@ -25,11 +25,19 @@
     <main>
       <section id="view-home">
         <h1>Biblioteca</h1>
-        <p class="lede" id="home-lede">Marca series, temporadas o títulos y pulsa Escanear ahora. El escaneo automático sigue cubriendo todo solo.</p>
+        <p class="lede" id="home-lede">Marca series, temporadas o títulos y pulsa Escanear ahora, o Traducir de → a si ya tienes el subtítulo de origen. El escaneo automático sigue cubriendo todo solo.</p>
         <div class="actions" id="library-actions">
           <button class="btn" id="btn-scan">Escanear ahora</button>
           <label class="check"><input type="checkbox" id="only-missing"> Solo faltantes</label>
           <span class="lede" id="scan-count"></span>
+        </div>
+        <div class="actions translate-row" id="translate-actions">
+          <label class="translate-field" for="translate-from">Traducir de</label>
+          <select id="translate-from" aria-label="Idioma de origen"></select>
+          <span class="translate-arrow" aria-hidden="true">→</span>
+          <label class="translate-field" for="translate-to">a</label>
+          <select id="translate-to" aria-label="Idioma de destino"></select>
+          <button class="btn btn-ghost" type="button" id="btn-translate">Traducir</button>
         </div>
         <div class="tabs" id="lib-tabs" role="tablist" aria-label="Bibliotecas"></div>
         <div id="library-panel">
@@ -83,6 +91,7 @@
         <div class="tabs" role="tablist" aria-label="Ajustes">
           <button type="button" role="tab" data-settings-tab="idioma" aria-selected="true">Idioma</button>
           <button type="button" role="tab" data-settings-tab="jellyfin" aria-selected="false">Jellyfin</button>
+          <button type="button" role="tab" data-settings-tab="traducir" aria-selected="false">Traducir</button>
           <button type="button" role="tab" data-settings-tab="proveedores" aria-selected="false">Proveedores</button>
         </div>
         <form class="stack" id="settings-form">
@@ -156,6 +165,21 @@
               <button class="btn btn-ghost" type="button" id="btn-test">Probar Jellyfin</button>
             </div>
             <div class="flash" id="jf-flash"></div>
+          </div>
+          <div class="card hidden" id="tab-traducir" role="tabpanel">
+            <h2>Traducir con Gemini</h2>
+            <p class="lede">En la biblioteca eliges de → a. Gemini traduce el subtítulo existente y lo sube a Jellyfin. TMDB aporta la ficha (sinopsis y nombres de personaje) para no traducir nombres propios.</p>
+            <div class="grid2">
+              <div>
+                <label for="gemini_api_key">API key de Gemini</label>
+                <input id="gemini_api_key" name="gemini_api_key" type="password" autocomplete="off" placeholder="AIza…">
+              </div>
+              <div>
+                <label for="tmdb_api_key">API key de TMDB (opcional)</label>
+                <input id="tmdb_api_key" name="tmdb_api_key" type="password" autocomplete="off">
+              </div>
+            </div>
+            <p class="lede">Gemini: <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>. TMDB: <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">themoviedb.org</a>.</p>
           </div>
           <div class="card hidden" id="tab-proveedores" role="tabpanel">
             <h2>Proveedores</h2>

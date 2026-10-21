@@ -40,6 +40,7 @@ La imagen en GHCR es privada por defecto en cuentas nuevas: en el repo → Packa
 1. En Jellyfin, una **API key** (Dashboard → API Keys).
 2. En Ajustes, los proveedores que quieras. Gestdown, Podnapisi, Subtis, YIFY, TVSubtitles, Subtitulamos, subf2m y Subtitle Cat no piden cuenta.
 3. Si usas OpenSubtitles.com: cuenta + **API key de app** en [consumers](https://www.opensubtitles.com/en/consumers) (usuario, no el email). SubDL, SubSource y SubX piden su propia key.
+4. Para **Traducir** (biblioteca → de → a): API key de [Gemini](https://aistudio.google.com/apikey). Opcional: API key de [TMDB](https://www.themoviedb.org/settings/api) para sinopsis y nombres de personaje.
 
 Abre `http://IP:8787`. La URL de Jellyfin desde el contenedor suele ser `http://IP-del-host:8096`, no `localhost`.
 
@@ -49,7 +50,8 @@ Abre `http://IP:8787`. La URL de Jellyfin desde el contenedor suele ser `http://
 |---|---|
 | Hash match | El archivo de video es el mismo que usó quien subió el subtítulo. Se instala solo. |
 | ffsubsync | Si no hay hash, alinea las marcas de tiempo con el audio. |
-| Revisar | Los que no fueron hash quedan en **Revisar**. |
+| Traducir | Usa un subtítulo que ya tienes (p. ej. inglés) y Gemini genera el destino; queda en **Revisar**. |
+| Revisar | Los que no fueron hash (y las traducciones) quedan en **Revisar**. |
 
 ## Desarrollo local
 

@@ -255,5 +255,24 @@ class RetryDetailTests(unittest.TestCase):
         )
 
 
+class TranslateSrtTests(unittest.TestCase):
+    def test_parse_roundtrip_and_chunks(self):
+        from app.translate import chunk_cues, jellyfin_lang_tag, parse_srt, render_srt, strip_model_noise
+
+        sample = (
+            "1\n00:00:01,000 --> 00:00:02,500\nHello, Deckard.\n\n"
+            "2\n00:00:03,000 --> 00:00:04,000\nLine A\nLine B\n"
+        )
+        cues = parse_srt(sample)
+        self.assertEqual(len(cues), 2)
+        self.assertEqual(cues[1].text, "Line A\nLine B")
+        self.assertEqual([c.text for c in parse_srt(render_srt(cues))], [c.text for c in cues])
+        self.assertEqual(len(chunk_cues(cues, 1)), 2)
+        cleaned = strip_model_noise("```srt\n1\n00:00:01,000 --> 00:00:02,000\nHola\n```")
+        self.assertTrue(cleaned.startswith("1\n"))
+        self.assertEqual(jellyfin_lang_tag("es-419"), "es-MX")
+        self.assertEqual(jellyfin_lang_tag("en"), "en")
+
+
 if __name__ == "__main__":
     unittest.main()

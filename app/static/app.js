@@ -14,6 +14,7 @@ const state = {
 const ACTION = {
   downloaded: ["descargado", "gold"],
   synced: ["sincronizado", "ok"],
+  translated: ["traducido", "ok"],
   empty: ["sin resultados", "bad"],
   error: ["error", "bad"],
   dropped: ["tirado", "warn"],
@@ -21,6 +22,23 @@ const ACTION = {
   running: ["ahora", "gold"],
   ok: ["completo", "ok"],
 };
+
+const LANG_OPTIONS = [
+  ["es-419", "Latino"],
+  ["es-ES", "España"],
+  ["en", "Inglés"],
+  ["en-GB", "Reino Unido"],
+  ["pt-BR", "Brasil"],
+  ["pt-PT", "Portugal"],
+  ["fr", "Francia"],
+  ["fr-CA", "Canadá"],
+  ["de", "Alemán"],
+  ["it", "Italiano"],
+  ["ja", "Japonés"],
+  ["ko", "Coreano"],
+  ["zh-Hans", "Chino simpl."],
+  ["zh-Hant", "Chino trad."],
+];
 
 document.querySelectorAll("header nav button").forEach((btn) => {
   btn.addEventListener("click", () => show(btn.dataset.view));
@@ -43,6 +61,33 @@ $("#btn-scan").addEventListener("click", async () => {
   });
   const body = await res.json().catch(() => ({}));
   toast(res.ok ? `Cola de ${ids.length}.` : body.detail || "No se pudo escanear.", res.ok);
+  if (res.ok) show("queue");
+  await refresh();
+});
+$("#btn-translate").addEventListener("click", async () => {
+  const ids = selectedIds();
+  if (!ids.length) {
+    toast("Marca una serie, temporada o título.", false);
+    return;
+  }
+  const source = $("#translate-from").value;
+  const target = $("#translate-to").value;
+  if (!source || !target) {
+    toast("Elige idioma de origen y destino.", false);
+    return;
+  }
+  if (source === target) {
+    toast("Origen y destino no pueden ser el mismo.", false);
+    return;
+  }
+  $("#btn-translate").disabled = true;
+  const res = await fetch("/api/translate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids, source, target }),
+  });
+  const body = await res.json().catch(() => ({}));
+  toast(res.ok ? `Traduciendo ${ids.length}…` : body.detail || "No se pudo traducir.", res.ok);
   if (res.ok) show("queue");
   await refresh();
 });
@@ -168,6 +213,8 @@ function readSettings() {
     path_maps: maps,
     enabled_providers: enabled,
     provider_creds: creds,
+    gemini_api_key: $("#gemini_api_key").value.trim(),
+    tmdb_api_key: $("#tmdb_api_key").value.trim(),
   };
 }
 
@@ -218,7 +265,7 @@ function showSettingsTab(name) {
   document.querySelectorAll("[data-settings-tab]").forEach((b) => {
     b.setAttribute("aria-selected", b.dataset.settingsTab === name ? "true" : "false");
   });
-  ["idioma", "jellyfin", "proveedores"].forEach((id) => {
+  ["idioma", "jellyfin", "traducir", "proveedores"].forEach((id) => {
     const panel = document.getElementById(`tab-${id}`);
     if (panel) panel.classList.toggle("hidden", id !== name);
   });
@@ -245,6 +292,7 @@ function renderHome() {
       ? `${server.ServerName} · ${w.running ? w.phase : "en espera"}`
       : "Sin conexión";
   $("#btn-scan").disabled = !!w.running;
+  if ($("#btn-translate")) $("#btn-translate").disabled = !!w.running;
   renderQueue();
   if (state.wasRunning && !w.running) loadLibrary(true);
   state.wasRunning = !!w.running;
@@ -481,14 +529,33 @@ function fillSettings() {
   const s = state.data.settings || {};
   $("#jellyfin_url").value = s.jellyfin_url || "";
   if (!$("#api_key").value) $("#api_key").value = s.api_key || "";
+  if (!$("#gemini_api_key").value) $("#gemini_api_key").value = s.gemini_api_key || "";
+  if (!$("#tmdb_api_key").value) $("#tmdb_api_key").value = s.tmdb_api_key || "";
   renderProviders();
   fillLangs(s.languages && s.languages.length ? s.languages : [s.language || "es-419"]);
+  fillTranslateSelects(s);
   $("#scan_hours").value = s.scan_hours ?? 6;
   $("#rate_limit_s").value = s.rate_limit_s ?? 3;
   $("#prefer_hash").checked = !!s.prefer_hash;
   $("#autosync").checked = !!s.autosync;
   $("#include_hi").checked = !!s.include_hi;
   $("#path_maps").value = (s.path_maps || []).map((m) => `${m.from}=${m.to}`).join("\n");
+}
+
+function fillTranslateSelects(s) {
+  const from = $("#translate-from");
+  const to = $("#translate-to");
+  if (!from || !to) return;
+  const prevFrom = from.value;
+  const prevTo = to.value;
+  const opts = LANG_OPTIONS.map(([code, label]) => `<option value="${code}">${esc(label)}</option>`).join("");
+  from.innerHTML = opts;
+  to.innerHTML = opts;
+  const langs = (s && s.languages && s.languages.length ? s.languages : null) || ["es-419"];
+  from.value = prevFrom || "en";
+  to.value = prevTo || langs[0] || "es-419";
+  if (![...from.options].some((o) => o.value === from.value)) from.value = "en";
+  if (![...to.options].some((o) => o.value === to.value)) to.value = "es-419";
 }
 
 function readLangs() {

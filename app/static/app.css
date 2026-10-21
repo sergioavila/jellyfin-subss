@@ -120,7 +120,24 @@ h2 {
   letter-spacing: 0.02em;
 }
 
-.actions { display: flex; gap: 8px; margin: 16px 0 24px; flex-wrap: wrap; }
+.actions { display: flex; gap: 8px; margin: 16px 0 24px; flex-wrap: wrap; align-items: center; }
+.translate-row { margin-top: -8px; }
+.translate-field {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+.translate-arrow { color: var(--muted); font-family: var(--mono); }
+.translate-row select {
+  background: var(--neutral);
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  min-height: 40px;
+  min-width: 9rem;
+  color: var(--text);
+}
 .btn {
   background: var(--accent);
   color: var(--neutral);
