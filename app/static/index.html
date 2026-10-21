@@ -55,6 +55,14 @@
       <section id="view-queue" class="hidden">
         <h1>Cola</h1>
         <p class="lede" id="queue-lede">Los resultados aparecen acá, uno por uno.</p>
+        <div id="queue-activity" class="queue-activity hidden" aria-live="polite">
+          <span class="spinner" aria-hidden="true"></span>
+          <span id="queue-activity-text" class="queue-activity-text"></span>
+        </div>
+        <div id="queue-errors" class="queue-errors hidden">
+          <h2>Errores</h2>
+          <ul id="queue-error-log" class="queue-error-log"></ul>
+        </div>
         <div class="table-wrap">
           <table class="table" id="events-table">
             <thead><tr><th>Título</th><th>Acción</th><th>Proveedor</th><th>Detalle</th><th></th></tr></thead>

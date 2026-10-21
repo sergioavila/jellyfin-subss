@@ -23,6 +23,16 @@ const ACTION = {
   ok: ["completo", "ok"],
 };
 
+const PHASE = {
+  conectando: "Conectando con Jellyfin",
+  buscando: "Buscando subtítulos",
+  descargando: "Descargando",
+  sincronizando: "Sincronizando con el audio",
+  leyendo: "Leyendo subtítulo de origen",
+  traduciendo: "Traduciendo con Gemini",
+  idle: "En espera",
+};
+
 const LANG_OPTIONS = [
   ["es-419", "Latino"],
   ["es-ES", "España"],
@@ -289,7 +299,11 @@ function renderHome() {
   $("#app-status").textContent = server.error
     ? server.error
     : server.ServerName
-      ? `${server.ServerName} · ${w.running ? w.phase : "en espera"}`
+      ? `${server.ServerName} · ${
+          w.running
+            ? [phaseLabel(w.phase), w.current].filter(Boolean).join(" · ")
+            : "en espera"
+        }`
       : "Sin conexión";
   $("#btn-scan").disabled = !!w.running;
   if ($("#btn-translate")) $("#btn-translate").disabled = !!w.running;
@@ -305,6 +319,55 @@ function rowProvider(e) {
   return m ? m[1].trim() : "";
 }
 
+function phaseLabel(phase) {
+  return PHASE[phase] || phase || "Trabajando";
+}
+
+function renderQueueActivity(w, queue) {
+  const box = $("#queue-activity");
+  const text = $("#queue-activity-text");
+  if (!box || !text) return;
+  if (!w.running) {
+    box.classList.add("hidden");
+    text.textContent = "";
+    return;
+  }
+  const done = queue.filter((q) => q.status && q.status !== "pending" && q.status !== "running").length;
+  const parts = [
+    `Cola ${done}/${queue.length || 0}`,
+    phaseLabel(w.phase),
+  ];
+  if (w.current) parts.push(w.current);
+  text.textContent = parts.join(" · ");
+  box.classList.remove("hidden");
+}
+
+function renderQueueErrors(w, queue, events) {
+  const box = $("#queue-errors");
+  const log = $("#queue-error-log");
+  if (!box || !log) return;
+  const lines = [];
+  if (w.error) lines.push({ title: "Trabajo", detail: w.error });
+  const failed = (queue.length ? queue : events).filter((e) => {
+    const status = e.status || e.action;
+    return status === "error" || status === "empty";
+  });
+  for (const e of failed) {
+    const title = e.language ? `${e.title} · ${langLabel(e.language)}` : e.title || "Ítem";
+    const detail = e.detail || (e.status || e.action) || "falló";
+    lines.push({ title, detail });
+  }
+  if (!lines.length) {
+    box.classList.add("hidden");
+    log.innerHTML = "";
+    return;
+  }
+  log.innerHTML = lines
+    .map((line) => `<li><strong>${esc(line.title)}</strong> — ${esc(line.detail)}</li>`)
+    .join("");
+  box.classList.remove("hidden");
+}
+
 function renderQueue() {
   const w = (state.data && state.data.worker) || {};
   const queue = w.queue || [];
@@ -312,15 +375,14 @@ function renderQueue() {
   const rows = queue.length ? queue : events;
   const done = queue.filter((q) => q.status && q.status !== "pending" && q.status !== "running").length;
   const lede = $("#queue-lede");
-  lede.textContent = w.error
-    ? w.error
-    : w.running
-      ? `Cola ${done}/${queue.length || 0}`
-      : queue.length
-        ? "Última cola. Reintenta los que fallaron."
-        : "Los resultados aparecen acá, uno por uno.";
-  if (w.error) lede.classList.add("bad");
-  else lede.classList.remove("bad");
+  lede.textContent = w.running
+    ? `Procesando ${done}/${queue.length || 0}. El detalle del paso actual está abajo.`
+    : queue.length
+      ? "Última cola. Reintenta los que fallaron."
+      : "Los resultados aparecen acá, uno por uno.";
+  lede.classList.toggle("bad", !!w.error);
+  renderQueueActivity(w, queue);
+  renderQueueErrors(w, queue, events);
   const tb = $("#events-table tbody");
   if (!rows.length && w.error) {
     tb.innerHTML = `<tr><td colspan="5" class="empty">${esc(w.error)}</td></tr>`;
@@ -331,6 +393,7 @@ function renderQueue() {
         .map((e) => {
           const status = e.status || e.action;
           const [label, cls] = ACTION[status] || [status, ""];
+          const spinning = status === "running" ? ` <span class="spinner spinner-inline" aria-hidden="true"></span>` : "";
           const extra = e.hash_match ? ` <span class="badge gold">exacto</span>` : "";
           const title = e.language ? `${e.title} · ${langLabel(e.language)}` : e.title;
           const iid = e.id || e.item_id || "";
@@ -338,7 +401,7 @@ function renderQueue() {
             iid && (status === "error" || status === "empty") && !w.running
               ? `<button class="btn btn-ghost" type="button" data-retry data-id="${esc(iid)}" data-lang="${esc(e.language || "")}">Reintentar</button>`
               : "";
-          return `<tr><td>${esc(title)}</td><td><span class="badge ${cls}">${label}</span>${extra}</td><td>${esc(rowProvider(e) || "—")}</td><td>${esc(e.detail || "")}</td><td>${retry}</td></tr>`;
+          return `<tr class="${status === "running" ? "is-running" : ""}"><td>${esc(title)}</td><td><span class="badge ${cls}">${label}</span>${spinning}${extra}</td><td>${esc(rowProvider(e) || "—")}</td><td>${esc(e.detail || "")}</td><td>${retry}</td></tr>`;
         })
         .join("")
     : `<tr><td colspan="5" class="empty">Todavía no hay actividad.</td></tr>`;

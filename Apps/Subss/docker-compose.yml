@@ -1,7 +1,7 @@
 name: jellyfin-subss
 services:
   subss:
-    image: ghcr.io/sergioavila/jellyfin-subss:1.2.1
+    image: ghcr.io/sergioavila/jellyfin-subss:1.2.2
     container_name: subss
     restart: unless-stopped
     labels:
@@ -184,7 +184,7 @@ x-casaos:
   category: Media
   icon: https://cdn.jsdelivr.net/gh/sergioavila/jellyfin-subss@main/Apps/Subss/icon.png
   thumbnail: https://cdn.jsdelivr.net/gh/sergioavila/jellyfin-subss@main/Apps/Subss/icon.png
-  version: "1.2.1"
+  version: "1.2.2"
   tips:
     before_install:
       en_us: |
