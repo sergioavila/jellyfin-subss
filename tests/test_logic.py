@@ -201,6 +201,10 @@ class PathTests(unittest.TestCase):
     def test_passthrough_when_no_map(self):
         self.assertEqual(map_path("/media/foo.mkv", []), "/media/foo.mkv")
 
+    def test_map_path_ignores_case(self):
+        mapped = map_path("/Media/TV/foo.mkv", [{"from": "/media", "to": "/media"}])
+        self.assertEqual(mapped, "/media/TV/foo.mkv")
+
 
 class CatalogTests(unittest.TestCase):
     def test_ids_unique_and_wired(self):
@@ -307,6 +311,50 @@ class TranslateSrtTests(unittest.TestCase):
             self.assertIn("DVDSUB", str(ctx.exception))
         finally:
             jf.close()
+
+    def test_source_srt_falls_back_to_provider(self):
+        from app.jellyfin import Jellyfin, JellyfinError
+        from app.worker import _source_srt_text
+
+        class FakeJF(Jellyfin):
+            def __init__(self):
+                self.uploaded = None
+
+            def fetch_subtitle_srt(self, item, language, path_maps=None):
+                raise JellyfinError("El subtítulo en en es DVDSUB (imagen); descarga un .srt primero")
+
+            def upload_subtitle(self, item_id, content, language, fmt="srt", **_k):
+                self.uploaded = (item_id, content, language, fmt)
+
+            def refresh(self, item_id):
+                pass
+
+            def close(self):
+                pass
+
+        class FakeHub:
+            def enabled_ids(self):
+                return ["podnapisi"]
+
+            def search(self, item, wanted, moviehash):
+                return [{"Name": "en.srt", "ProviderName": "Podnapisi", "provider": "podnapisi"}]
+
+            def download(self, candidate):
+                return b"1\n00:00:01,000 --> 00:00:02,000\nHi\n", "en.srt"
+
+        jf = FakeJF()
+        text, origin = _source_srt_text(
+            jf,
+            FakeHub(),
+            {"Id": "ep1", "Path": "/Media/x.mkv"},
+            {"path_maps": [], "include_hi": False, "autosync": False},
+            "en",
+            "Show S01E01",
+        )
+        self.assertEqual(origin, "Podnapisi")
+        self.assertIn("Hi", text)
+        self.assertEqual(jf.uploaded[0], "ep1")
+        self.assertEqual(jf.uploaded[2], "en")
 
 
 if __name__ == "__main__":

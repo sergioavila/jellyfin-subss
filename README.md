@@ -50,7 +50,7 @@ Abre `http://IP:8787`. La URL de Jellyfin desde el contenedor suele ser `http://
 |---|---|
 | Hash match | El archivo de video es el mismo que usó quien subió el subtítulo. Se instala solo. |
 | ffsubsync | Si no hay hash, alinea las marcas de tiempo con el audio. |
-| Traducir | Usa un subtítulo que ya tienes (p. ej. inglés) y Gemini genera el destino; queda en **Revisar**. |
+| Traducir | Usa un subtítulo de texto (p. ej. inglés) y Gemini genera el destino; si el origen es solo imagen embebida, primero baja un `.srt`. Queda en **Revisar**. |
 | Revisar | Los que no fueron hash (y las traducciones) quedan en **Revisar**. |
 
 ## Desarrollo local

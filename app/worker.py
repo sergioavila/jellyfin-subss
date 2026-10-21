@@ -362,6 +362,57 @@ def start_translate(item_ids: list[str], source: str, target: str) -> None:
     threading.Thread(target=_safe_translate, args=(item_ids, source, target), daemon=True).start()
 
 
+def _provider_srt(hub: Hub, item: dict, settings: dict, lang: str) -> tuple[bytes, dict]:
+    """Descarga un .srt de texto para `lang` (p. ej. cuando el embebido es solo imagen)."""
+    if not hub.enabled_ids():
+        raise ProviderError("Activa al menos un proveedor de subtítulos")
+    video = map_path(item.get("Path"), settings.get("path_maps") or [])
+    moviehash = file_movie_hash(video) if video else None
+    candidates = hub.search(item, lang, moviehash)
+    best = pick_best(candidates, include_hi=bool(settings["include_hi"]), wanted=lang)
+    if not best:
+        hint = " · ".join(hub.last_errors[:3]) if hub.last_errors else "sin resultados"
+        raise ProviderError(f"No hay .srt de {lang}: {hint}")
+    raw, _filename = hub.download(best)
+    if settings.get("autosync") and video:
+        tmp = Path(video).with_name(Path(video).stem + ".subss-tmp.srt")
+        tmp.write_bytes(raw)
+        if ffsubsync(video, str(tmp)):
+            raw = tmp.read_bytes()
+        tmp.unlink(missing_ok=True)
+    return raw, best
+
+
+def _source_srt_text(
+    jf: Jellyfin,
+    hub: Hub | None,
+    item: dict,
+    settings: dict,
+    source: str,
+    title: str,
+) -> tuple[str, str]:
+    """Texto SRT de origen: pista de texto en Jellyfin, o descarga si solo hay imagen/nada."""
+    try:
+        return jf.fetch_subtitle_srt(item, source, settings.get("path_maps") or []), "Jellyfin"
+    except JellyfinError as exc:
+        msg = str(exc)
+        # Image embeds (DVDSUB/PGS) or missing text track → pull a real .srt
+        if "imagen" not in msg and "No hay subtítulo" not in msg:
+            raise
+        log.info("origen %s sin texto (%s); buscando .srt", source, msg)
+
+    if hub is None:
+        raise ProviderError(
+            f"El subtítulo en {source} es imagen embebida; activa proveedores para bajar un .srt"
+        )
+    _set(phase="buscando", current=f"{title} · origen {source}")
+    raw, best = _provider_srt(hub, item, settings, source)
+    provider = best.get("ProviderName") or best.get("provider") or "proveedor"
+    jf.upload_subtitle(item["Id"], raw, jellyfin_lang_tag(source), "srt")
+    jf.refresh(item["Id"])
+    return raw.decode("utf-8", errors="replace"), provider
+
+
 def _translate_one(
     jf: Jellyfin,
     item: dict,
@@ -371,13 +422,10 @@ def _translate_one(
     source: str,
     target: str,
     ctx_cache: dict,
+    hub: Hub | None = None,
 ) -> tuple[str, str]:
     title = _item_title(item)
     streams = item.get("MediaStreams")
-    if not has_language(streams, source):
-        detail = f"{source}→{target} · sin subtítulo de origen"
-        db.add_event(item_id=item["Id"], title=title, action="empty", detail=detail, language=target)
-        return "empty", detail
     if has_language(streams, target):
         detail = f"{source}→{target} · ya está"
         return "ok", detail
@@ -394,7 +442,13 @@ def _translate_one(
     ctx = ctx_cache[cache_key]
 
     _set(phase="leyendo", current=title)
-    raw = jf.fetch_subtitle_srt(item, source, settings.get("path_maps") or [])
+    try:
+        raw, origin = _source_srt_text(jf, hub, item, settings, source, title)
+    except ProviderError as exc:
+        detail = f"{source}→{target} · {exc}"[:400]
+        db.add_event(item_id=item["Id"], title=title, action="empty", detail=detail, language=target)
+        return "empty", detail
+
     _set(phase="traduciendo", current=f"{title} · {source}→{target}")
 
     def on_batch(i, total, _n):
@@ -412,6 +466,8 @@ def _translate_one(
     jf.refresh(item["Id"])
     counts["downloaded"] += 1
     detail = f"{source}→{target} · Gemini"
+    if origin != "Jellyfin":
+        detail += f" · origen {origin}"
     if ctx.title:
         detail += f" · {ctx.title}"
     db.add_event(
@@ -433,6 +489,7 @@ def translate_once(item_ids: list[str], source: str, target: str) -> None:
     job_id = db.start_job()
     counts = {"scanned": 0, "missing": 0, "downloaded": 0, "synced": 0, "failed": 0}
     jf: Jellyfin | None = None
+    hub: Hub | None = None
     only = [i for i in item_ids if i]
     try:
         if not settings["jellyfin_url"] or not settings["api_key"]:
@@ -441,6 +498,7 @@ def translate_once(item_ids: list[str], source: str, target: str) -> None:
             raise RuntimeError("Configura la API key de Gemini en Ajustes → Traducir")
         jf = Jellyfin(settings["jellyfin_url"], settings["api_key"])
         jf.ping()
+        hub = Hub(settings)
         videos = _load_videos(jf, only)
         if not videos:
             raise JellyfinError("No está en la biblioteca")
@@ -469,7 +527,14 @@ def translate_once(item_ids: list[str], source: str, target: str) -> None:
             _qset(index, status="running")
             try:
                 action, detail = _translate_one(
-                    jf, item, settings, counts, source=source, target=target, ctx_cache=ctx_cache
+                    jf,
+                    item,
+                    settings,
+                    counts,
+                    source=source,
+                    target=target,
+                    ctx_cache=ctx_cache,
+                    hub=hub,
                 )
                 _qset(index, status=action, detail=detail, provider="Gemini")
                 if action == "error":
@@ -490,6 +555,8 @@ def translate_once(item_ids: list[str], source: str, target: str) -> None:
     finally:
         if jf:
             jf.close()
+        if hub:
+            hub.close()
 
 
 def _safe_scan(item_ids: list[str] | None = None) -> None:

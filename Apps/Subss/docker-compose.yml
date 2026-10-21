@@ -1,7 +1,7 @@
 name: jellyfin-subss
 services:
   subss:
-    image: ghcr.io/sergioavila/jellyfin-subss:1.1.0
+    image: ghcr.io/sergioavila/jellyfin-subss:1.2.0
     container_name: subss
     restart: unless-stopped
     labels:
@@ -80,7 +80,7 @@ x-casaos:
 
       Auto subtitles and AI translation for your Jellyfin library.
 
-      Subss reads Jellyfin, finds titles missing the languages you marked, and downloads subtitles from the same kind of sites Bazarr uses. You can also translate an existing track (from→to) with Gemini. It is not a Jellyfin plugin. Jellyfin only lists the library and receives the finished file.
+      Subss reads Jellyfin, finds titles missing the languages you marked, and downloads subtitles from the same kind of sites Bazarr uses. You can also translate a track (from→to) with Gemini; if the source is only an image embed (DVDSUB/PGS), Subss downloads a text .srt first. It is not a Jellyfin plugin. Jellyfin only lists the library and receives the finished file.
 
       Open the web panel to pick languages, scan selected titles, translate marked titles, and review matches that were not exact.
 
@@ -106,7 +106,7 @@ x-casaos:
 
       Auto subtitles and AI translation for your Jellyfin library.
 
-      Subss reads Jellyfin, finds titles missing the languages you marked, and downloads subtitles from the same kind of sites Bazarr uses. You can also translate an existing track (from→to) with Gemini. It is not a Jellyfin plugin. Jellyfin only lists the library and receives the finished file.
+      Subss reads Jellyfin, finds titles missing the languages you marked, and downloads subtitles from the same kind of sites Bazarr uses. You can also translate a track (from→to) with Gemini; if the source is only an image embed (DVDSUB/PGS), Subss downloads a text .srt first. It is not a Jellyfin plugin. Jellyfin only lists the library and receives the finished file.
 
       Open the web panel to pick languages, scan selected titles, translate marked titles, and review matches that were not exact.
 
@@ -132,7 +132,7 @@ x-casaos:
 
       Subtítulos automáticos y traducción con IA para tu biblioteca Jellyfin.
 
-      Subss lee Jellyfin, encuentra los títulos a los que les falta alguno de los idiomas que marcaste y baja subtítulos de los mismos tipos de sitios que usa Bazarr. También puedes traducir una pista que ya tienes (de→a) con Gemini. No es un plugin de Jellyfin. Jellyfin solo entrega la lista y recibe el archivo ya bajado.
+      Subss lee Jellyfin, encuentra los títulos a los que les falta alguno de los idiomas que marcaste y baja subtítulos de los mismos tipos de sitios que usa Bazarr. También puedes traducir (de→a) con Gemini; si el origen es solo imagen embebida (DVDSUB/PGS), primero baja un .srt de texto. No es un plugin de Jellyfin. Jellyfin solo entrega la lista y recibe el archivo ya bajado.
 
       Abre el panel para elegir idiomas, escanear títulos, traducir los marcados y revisar las coincidencias que no fueron exactas.
 
@@ -158,7 +158,7 @@ x-casaos:
 
       Subtítulos automáticos y traducción con IA para tu biblioteca Jellyfin.
 
-      Subss lee Jellyfin, encuentra los títulos a los que les falta alguno de los idiomas que marcaste y baja subtítulos de los mismos tipos de sitios que usa Bazarr. También puedes traducir una pista que ya tienes (de→a) con Gemini. No es un plugin de Jellyfin. Jellyfin solo entrega la lista y recibe el archivo ya bajado.
+      Subss lee Jellyfin, encuentra los títulos a los que les falta alguno de los idiomas que marcaste y baja subtítulos de los mismos tipos de sitios que usa Bazarr. También puedes traducir (de→a) con Gemini; si el origen es solo imagen embebida (DVDSUB/PGS), primero baja un .srt de texto. No es un plugin de Jellyfin. Jellyfin solo entrega la lista y recibe el archivo ya bajado.
 
       Abre el panel para elegir idiomas, escanear títulos, traducir los marcados y revisar las coincidencias que no fueron exactas.
 
@@ -184,7 +184,7 @@ x-casaos:
   category: Media
   icon: https://cdn.jsdelivr.net/gh/sergioavila/jellyfin-subss@main/Apps/Subss/icon.png
   thumbnail: https://cdn.jsdelivr.net/gh/sergioavila/jellyfin-subss@main/Apps/Subss/icon.png
-  version: "1.1.0"
+  version: "1.2.0"
   tips:
     before_install:
       en_us: |

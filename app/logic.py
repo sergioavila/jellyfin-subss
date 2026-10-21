@@ -472,6 +472,11 @@ def map_path(jellyfin_path: str | None, maps: list[dict]) -> str | None:
     for item in maps or []:
         src = (item.get("from") or "").rstrip("/")
         dst = (item.get("to") or "").rstrip("/")
-        if src and jellyfin_path.startswith(src):
+        if not src:
+            continue
+        if jellyfin_path.startswith(src):
+            return dst + jellyfin_path[len(src) :]
+        # Jellyfin /Media vs contenedor /media
+        if jellyfin_path.lower().startswith(src.lower()):
             return dst + jellyfin_path[len(src) :]
     return jellyfin_path
