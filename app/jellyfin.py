@@ -110,30 +110,36 @@ class Jellyfin:
     def image_path(self, item_id: str) -> str:
         return f"/jf/Items/{item_id}/Images/Primary?fillHeight=120&fillWidth=80&quality=80"
 
-    def subtitle_stream_index(self, item: dict, language: str) -> int | None:
-        from app.logic import has_language, is_forced, is_subtitle, stream_matches_lang
+    def _matching_subtitle(
+        self, item: dict, language: str, *, text_only: bool = False, allow_forced: bool = False
+    ) -> dict | None:
+        from app.logic import is_forced, is_subtitle, is_text_subtitle, stream_matches_lang
 
-        streams = item.get("MediaStreams") or []
-        # pick the last matching external/full track (the one we just added)
         found = None
-        for stream in streams:
+        for stream in item.get("MediaStreams") or []:
             if not is_subtitle(stream):
                 continue
-            if is_forced(stream):
+            if is_forced(stream) and not allow_forced:
+                continue
+            if text_only and not is_text_subtitle(stream):
                 continue
             if stream_matches_lang(stream, language):
-                found = int(stream.get("Index"))
-        if found is None and has_language(streams, language, count_forced=True):
-            for stream in streams:
-                if is_subtitle(stream) and stream_matches_lang(stream, language):
-                    found = int(stream.get("Index"))
+                found = stream  # last match: prefer the one just uploaded
         return found
 
+    def subtitle_stream_index(self, item: dict, language: str) -> int | None:
+        stream = self._matching_subtitle(item, language, text_only=True)
+        if stream is None:
+            stream = self._matching_subtitle(item, language, allow_forced=True)
+        if stream is None:
+            return None
+        return int(stream.get("Index"))
+
     def external_sub_path(self, item: dict, language: str) -> str | None:
-        from app.logic import is_forced, is_subtitle, stream_matches_lang
+        from app.logic import is_forced, is_subtitle, is_text_subtitle, stream_matches_lang
 
         for stream in reversed(item.get("MediaStreams") or []):
-            if not is_subtitle(stream) or is_forced(stream):
+            if not is_subtitle(stream) or is_forced(stream) or not is_text_subtitle(stream):
                 continue
             if stream_matches_lang(stream, language) and stream.get("Path"):
                 return stream["Path"]
@@ -141,16 +147,23 @@ class Jellyfin:
 
     def fetch_subtitle_srt(self, item: dict, language: str, path_maps: list[dict] | None = None) -> str:
         """Lee el subtítulo en `language` como texto SRT (archivo externo o stream Jellyfin)."""
-        from app.logic import map_path
+        from app.logic import is_text_subtitle, map_path
 
         path = self.external_sub_path(item, language)
         if path:
             local = map_path(path, path_maps or [])
             if local and Path(local).is_file():
                 return Path(local).read_text(encoding="utf-8", errors="replace")
-        idx = self.subtitle_stream_index(item, language)
-        if idx is None:
+        stream = self._matching_subtitle(item, language, text_only=True)
+        if stream is None:
+            image = self._matching_subtitle(item, language)
+            if image is not None and not is_text_subtitle(image):
+                codec = image.get("Codec") or image.get("DisplayTitle") or "imagen"
+                raise JellyfinError(
+                    f"El subtítulo en {language} es {codec} (imagen); descarga un .srt primero"
+                )
             raise JellyfinError(f"No hay subtítulo en {language}")
+        idx = int(stream.get("Index"))
         source = (item.get("MediaSources") or [{}])[0]
         mid = source.get("Id") or item.get("Id")
         res = self.request("GET", f"/Videos/{item['Id']}/{mid}/Subtitles/{idx}/Stream.srt")

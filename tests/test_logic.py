@@ -10,6 +10,7 @@ from app.catalog import PROVIDERS, serves
 from app.logic import (
     build_library,
     has_language,
+    is_text_subtitle,
     map_path,
     missing_langs,
     normalize_langs,
@@ -53,6 +54,15 @@ class LanguageTests(unittest.TestCase):
     def test_english_is_not_spanish(self):
         streams = [{"Type": "Subtitle", "Language": "eng"}, {"Type": "Audio", "Language": "eng"}]
         self.assertFalse(has_language(streams, "es-419"))
+
+    def test_dvdsub_is_not_text(self):
+        self.assertFalse(
+            is_text_subtitle(
+                {"Type": "Subtitle", "Language": "eng", "Codec": "DVDSUB", "IsTextSubtitleStream": False}
+            )
+        )
+        self.assertTrue(is_text_subtitle({"Type": "Subtitle", "Language": "eng", "Codec": "subrip"}))
+        self.assertTrue(is_text_subtitle({"Type": "Subtitle", "Language": "eng", "IsTextSubtitleStream": True}))
 
     def test_search_code_is_iso(self):
         self.assertEqual(search_code("es-419"), "es")
@@ -272,6 +282,31 @@ class TranslateSrtTests(unittest.TestCase):
         self.assertTrue(cleaned.startswith("1\n"))
         self.assertEqual(jellyfin_lang_tag("es-419"), "es-MX")
         self.assertEqual(jellyfin_lang_tag("en"), "en")
+
+    def test_fetch_rejects_image_subtitle(self):
+        from app.jellyfin import Jellyfin, JellyfinError
+
+        jf = Jellyfin("http://example.invalid", "key")
+        try:
+            item = {
+                "Id": "x",
+                "MediaStreams": [
+                    {
+                        "Type": "Subtitle",
+                        "Language": "eng",
+                        "Codec": "DVDSUB",
+                        "Index": 2,
+                        "IsTextSubtitleStream": False,
+                    }
+                ],
+                "MediaSources": [{"Id": "x"}],
+            }
+            with self.assertRaises(JellyfinError) as ctx:
+                jf.fetch_subtitle_srt(item, "en")
+            self.assertIn("imagen", str(ctx.exception))
+            self.assertIn("DVDSUB", str(ctx.exception))
+        finally:
+            jf.close()
 
 
 if __name__ == "__main__":

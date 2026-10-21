@@ -258,6 +258,27 @@ def is_forced(stream: dict) -> bool:
     return bool(stream.get("IsForced") or stream.get("isForced"))
 
 
+# Image-based tracks: Jellyfin cannot convert these to SRT for translation.
+_IMAGE_CODECS = frozenset({
+    "pgssub",
+    "hdmv_pgs_subtitle",
+    "dvdsub",
+    "dvd_subtitle",
+    "vobsub",
+    "xsub",
+    "dvb_subtitle",
+    "dvbsub",
+})
+
+
+def is_text_subtitle(stream: dict) -> bool:
+    """True when the track is text (SRT/ASS/…), not PGS/VobSub bitmap."""
+    if "IsTextSubtitleStream" in stream:
+        return bool(stream["IsTextSubtitleStream"])
+    codec = (stream.get("Codec") or stream.get("codec") or "").strip().lower()
+    return codec not in _IMAGE_CODECS if codec else True
+
+
 def has_language(streams: list[dict] | None, wanted: str, *, count_forced: bool = False) -> bool:
     for stream in streams or []:
         if not is_subtitle(stream):
