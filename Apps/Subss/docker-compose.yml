@@ -1,7 +1,7 @@
 name: jellyfin-subss
 services:
   subss:
-    image: ghcr.io/sergioavila/jellyfin-subss:latest
+    image: ghcr.io/sergioavila/jellyfin-subss:1.1.0
     container_name: subss
     restart: unless-stopped
     labels:
@@ -70,25 +70,26 @@ x-casaos:
     es_es: Subss
     es_ES: Subss
   tagline:
-    en_us: Auto subtitles for your Jellyfin library
-    en_US: Auto subtitles for your Jellyfin library
-    es_es: Subtítulos automáticos para tu biblioteca Jellyfin
-    es_ES: Subtítulos automáticos para tu biblioteca Jellyfin
+    en_us: Auto subtitles and AI translation for Jellyfin
+    en_US: Auto subtitles and AI translation for Jellyfin
+    es_es: Subtítulos automáticos y traducción IA para Jellyfin
+    es_ES: Subtítulos automáticos y traducción IA para Jellyfin
   description:
     en_us: |
       **Subss**
 
-      Auto subtitles for your Jellyfin library.
+      Auto subtitles and AI translation for your Jellyfin library.
 
-      Subss reads Jellyfin, finds titles missing the languages you marked, and downloads subtitles from the same kind of sites Bazarr uses. It is not a Jellyfin plugin. Jellyfin only lists the library and receives the finished file.
+      Subss reads Jellyfin, finds titles missing the languages you marked, and downloads subtitles from the same kind of sites Bazarr uses. You can also translate an existing track (from→to) with Gemini. It is not a Jellyfin plugin. Jellyfin only lists the library and receives the finished file.
 
-      Open the web panel to pick languages, scan selected titles, and review matches that were not exact.
+      Open the web panel to pick languages, scan selected titles, translate marked titles, and review matches that were not exact.
 
       **Getting started**
       1. Create an API key in Jellyfin (Dashboard → API Keys).
       2. Map the container’s `/media` directory to the same library folder Jellyfin uses.
       3. Open the panel and set the Jellyfin URL to your NAS IP (not localhost), the API key, and the languages you want.
       4. Enable the providers you want. Several work without an account.
+      5. Optional: Settings → Translate → Gemini API key (and TMDB for character names).
 
       **Important precautions**
       - This app downloads subtitle files and uploads them into Jellyfin. Wrong language settings can attach the wrong track.
@@ -103,17 +104,18 @@ x-casaos:
     en_US: |
       **Subss**
 
-      Auto subtitles for your Jellyfin library.
+      Auto subtitles and AI translation for your Jellyfin library.
 
-      Subss reads Jellyfin, finds titles missing the languages you marked, and downloads subtitles from the same kind of sites Bazarr uses. It is not a Jellyfin plugin. Jellyfin only lists the library and receives the finished file.
+      Subss reads Jellyfin, finds titles missing the languages you marked, and downloads subtitles from the same kind of sites Bazarr uses. You can also translate an existing track (from→to) with Gemini. It is not a Jellyfin plugin. Jellyfin only lists the library and receives the finished file.
 
-      Open the web panel to pick languages, scan selected titles, and review matches that were not exact.
+      Open the web panel to pick languages, scan selected titles, translate marked titles, and review matches that were not exact.
 
       **Getting started**
       1. Create an API key in Jellyfin (Dashboard → API Keys).
       2. Map the container’s `/media` directory to the same library folder Jellyfin uses.
       3. Open the panel and set the Jellyfin URL to your NAS IP (not localhost), the API key, and the languages you want.
       4. Enable the providers you want. Several work without an account.
+      5. Optional: Settings → Translate → Gemini API key (and TMDB for character names).
 
       **Important precautions**
       - This app downloads subtitle files and uploads them into Jellyfin. Wrong language settings can attach the wrong track.
@@ -128,17 +130,18 @@ x-casaos:
     es_es: |
       **Subss**
 
-      Subtítulos automáticos para tu biblioteca Jellyfin.
+      Subtítulos automáticos y traducción con IA para tu biblioteca Jellyfin.
 
-      Subss lee Jellyfin, encuentra los títulos a los que les falta alguno de los idiomas que marcaste y baja subtítulos de los mismos tipos de sitios que usa Bazarr. No es un plugin de Jellyfin. Jellyfin solo entrega la lista y recibe el archivo ya bajado.
+      Subss lee Jellyfin, encuentra los títulos a los que les falta alguno de los idiomas que marcaste y baja subtítulos de los mismos tipos de sitios que usa Bazarr. También puedes traducir una pista que ya tienes (de→a) con Gemini. No es un plugin de Jellyfin. Jellyfin solo entrega la lista y recibe el archivo ya bajado.
 
-      Abre el panel para elegir idiomas, escanear títulos y revisar las coincidencias que no fueron exactas.
+      Abre el panel para elegir idiomas, escanear títulos, traducir los marcados y revisar las coincidencias que no fueron exactas.
 
       **Cómo empezar**
       1. Crea una API key en Jellyfin (Dashboard → API Keys).
       2. Mapea `/media` del contenedor a la misma carpeta de biblioteca que usa Jellyfin.
       3. Abre el panel y pon la URL de Jellyfin con la IP del NAS (no localhost), la API key y los idiomas.
       4. Activa los proveedores que quieras. Varios funcionan sin cuenta.
+      5. Opcional: Ajustes → Traducir → API key de Gemini (y TMDB para nombres de personaje).
 
       **Precauciones**
       - Esta app baja subtítulos y los sube a Jellyfin. Un idioma mal marcado puede dejar la pista equivocada.
@@ -153,17 +156,18 @@ x-casaos:
     es_ES: |
       **Subss**
 
-      Subtítulos automáticos para tu biblioteca Jellyfin.
+      Subtítulos automáticos y traducción con IA para tu biblioteca Jellyfin.
 
-      Subss lee Jellyfin, encuentra los títulos a los que les falta alguno de los idiomas que marcaste y baja subtítulos de los mismos tipos de sitios que usa Bazarr. No es un plugin de Jellyfin. Jellyfin solo entrega la lista y recibe el archivo ya bajado.
+      Subss lee Jellyfin, encuentra los títulos a los que les falta alguno de los idiomas que marcaste y baja subtítulos de los mismos tipos de sitios que usa Bazarr. También puedes traducir una pista que ya tienes (de→a) con Gemini. No es un plugin de Jellyfin. Jellyfin solo entrega la lista y recibe el archivo ya bajado.
 
-      Abre el panel para elegir idiomas, escanear títulos y revisar las coincidencias que no fueron exactas.
+      Abre el panel para elegir idiomas, escanear títulos, traducir los marcados y revisar las coincidencias que no fueron exactas.
 
       **Cómo empezar**
       1. Crea una API key en Jellyfin (Dashboard → API Keys).
       2. Mapea `/media` del contenedor a la misma carpeta de biblioteca que usa Jellyfin.
       3. Abre el panel y pon la URL de Jellyfin con la IP del NAS (no localhost), la API key y los idiomas.
       4. Activa los proveedores que quieras. Varios funcionan sin cuenta.
+      5. Opcional: Ajustes → Traducir → API key de Gemini (y TMDB para nombres de personaje).
 
       **Precauciones**
       - Esta app baja subtítulos y los sube a Jellyfin. Un idioma mal marcado puede dejar la pista equivocada.
@@ -180,14 +184,14 @@ x-casaos:
   category: Media
   icon: https://cdn.jsdelivr.net/gh/sergioavila/jellyfin-subss@main/Apps/Subss/icon.png
   thumbnail: https://cdn.jsdelivr.net/gh/sergioavila/jellyfin-subss@main/Apps/Subss/icon.png
-  version: "1.0.0"
+  version: "1.1.0"
   tips:
     before_install:
       en_us: |
-        Create a Jellyfin API key first (Dashboard → API Keys). After install, open the panel and set the Jellyfin URL to your NAS IP, not localhost. Map /media to the same library Jellyfin uses. Do not expose port 8787 to the internet. The panel has no login.
+        Create a Jellyfin API key first (Dashboard → API Keys). After install, open the panel and set the Jellyfin URL to your NAS IP, not localhost. Map /media to the same library Jellyfin uses. For Translate (from→to), add a Gemini API key in Settings. Do not expose port 8787 to the internet. The panel has no login.
       en_US: |
-        Create a Jellyfin API key first (Dashboard → API Keys). After install, open the panel and set the Jellyfin URL to your NAS IP, not localhost. Map /media to the same library Jellyfin uses. Do not expose port 8787 to the internet. The panel has no login.
+        Create a Jellyfin API key first (Dashboard → API Keys). After install, open the panel and set the Jellyfin URL to your NAS IP, not localhost. Map /media to the same library Jellyfin uses. For Translate (from→to), add a Gemini API key in Settings. Do not expose port 8787 to the internet. The panel has no login.
       es_es: |
-        Crea primero una API key en Jellyfin (Dashboard → API Keys). Después de instalar, abre el panel y pon la URL de Jellyfin con la IP del NAS, no localhost. Mapea /media a la misma biblioteca que usa Jellyfin. No expongas el puerto 8787 a internet. El panel no tiene login.
+        Crea primero una API key en Jellyfin (Dashboard → API Keys). Después de instalar, abre el panel y pon la URL de Jellyfin con la IP del NAS, no localhost. Mapea /media a la misma biblioteca que usa Jellyfin. Para Traducir (de→a), agrega una API key de Gemini en Ajustes. No expongas el puerto 8787 a internet. El panel no tiene login.
       es_ES: |
-        Crea primero una API key en Jellyfin (Dashboard → API Keys). Después de instalar, abre el panel y pon la URL de Jellyfin con la IP del NAS, no localhost. Mapea /media a la misma biblioteca que usa Jellyfin. No expongas el puerto 8787 a internet. El panel no tiene login.
+        Crea primero una API key en Jellyfin (Dashboard → API Keys). Después de instalar, abre el panel y pon la URL de Jellyfin con la IP del NAS, no localhost. Mapea /media a la misma biblioteca que usa Jellyfin. Para Traducir (de→a), agrega una API key de Gemini en Ajustes. No expongas el puerto 8787 a internet. El panel no tiene login.
