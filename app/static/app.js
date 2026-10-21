@@ -28,7 +28,7 @@ const PHASE = {
   buscando: "Buscando subtítulos",
   descargando: "Descargando",
   sincronizando: "Sincronizando con el audio",
-  leyendo: "Leyendo subtítulo de origen",
+  leyendo: "Leyendo / extrayendo subtítulo de origen",
   traduciendo: "Traduciendo con Gemini",
   idle: "En espera",
 };

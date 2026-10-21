@@ -356,6 +356,60 @@ class TranslateSrtTests(unittest.TestCase):
         self.assertEqual(jf.uploaded[0], "ep1")
         self.assertEqual(jf.uploaded[2], "en")
 
+    def test_mkvsub_picks_text_track_and_skips_image(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        from unittest import mock
+
+        from app import mkvsub
+
+        sample = {
+            "tracks": [
+                {"id": 0, "type": "video", "codec": "AVC"},
+                {"id": 1, "type": "audio", "codec": "AAC", "properties": {"language": "eng"}},
+                {
+                    "id": 2,
+                    "type": "subtitles",
+                    "codec": "VobSub",
+                    "properties": {"language": "eng"},
+                },
+                {
+                    "id": 3,
+                    "type": "subtitles",
+                    "codec": "SubRip/SRT",
+                    "properties": {"language": "eng", "track_name": "English"},
+                },
+            ]
+        }
+
+        class FakeProc:
+            def __init__(self, stdout="", returncode=0):
+                self.stdout = stdout
+                self.stderr = ""
+                self.returncode = returncode
+
+        calls = []
+
+        def fake_run(cmd, **_k):
+            calls.append(cmd)
+            if cmd[:2] == ["mkvmerge", "-J"]:
+                return FakeProc(json.dumps(sample))
+            if cmd[:2] == ["mkvextract", "tracks"]:
+                out = Path(cmd[3].split(":", 1)[1])
+                out.write_text("1\n00:00:01,000 --> 00:00:02,000\nHello\n", encoding="utf-8")
+                return FakeProc()
+            return FakeProc(returncode=1)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            video = Path(tmp) / "show.mkv"
+            video.write_bytes(b"fake")
+            with mock.patch.object(mkvsub, "_run", side_effect=fake_run):
+                text = mkvsub.extract_srt_for_lang(str(video), "en")
+            self.assertIn("Hello", text or "")
+            extract = next(c for c in calls if c[:2] == ["mkvextract", "tracks"])
+            self.assertTrue(extract[3].startswith("3:"))
+
 
 if __name__ == "__main__":
     unittest.main()

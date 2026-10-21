@@ -146,14 +146,23 @@ class Jellyfin:
         return None
 
     def fetch_subtitle_srt(self, item: dict, language: str, path_maps: list[dict] | None = None) -> str:
-        """Lee el subtítulo en `language` como texto SRT (archivo externo o stream Jellyfin)."""
+        """Lee el subtítulo en `language` como texto SRT (externo, MKV local o stream Jellyfin)."""
         from app.logic import is_text_subtitle, map_path
+        from app.mkvsub import extract_srt_for_lang
 
         path = self.external_sub_path(item, language)
         if path:
             local = map_path(path, path_maps or [])
             if local and Path(local).is_file():
                 return Path(local).read_text(encoding="utf-8", errors="replace")
+
+        # Sin sidecar: extraer pista de texto del MKV (mkvextract), si el archivo es local
+        video = map_path(item.get("Path"), path_maps or [])
+        if video and Path(video).is_file():
+            extracted = extract_srt_for_lang(video, language)
+            if extracted:
+                return extracted
+
         stream = self._matching_subtitle(item, language, text_only=True)
         if stream is None:
             image = self._matching_subtitle(item, language)
